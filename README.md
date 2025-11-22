@@ -1,10 +1,10 @@
-# Interiowale
+# Etopmattress
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## GitHub Repository
 
-This project is connected to the GitHub repository: https://github.com/israfil-hossain/interiowale.git
+This project is connected to the GitHub repository: https://github.com/israfil-hossain/etopmattress.git
 
 ## Getting Started
 
@@ -44,4 +44,3 @@ Popular deployment options include:
 - Cloud providers like AWS, Google Cloud, or DigitalOcean
 - Platform-as-a-Service providers
 - Docker containerization
-# etopmattress

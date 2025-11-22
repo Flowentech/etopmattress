@@ -1,0 +1,49 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+/dist
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment Files
+# These files contain secrets and should NEVER be committed
+.env
+.env.local
+.env*.local
+.env.backup
+
+# Optional: Uncommenting the line below will allow .env.example and .env.production to be committed for documentation purposes
+# .env.production can be committed if it only contains references/examples
+# but make sure it doesn't contain real production secrets
+
+# Vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
