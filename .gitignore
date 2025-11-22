@@ -36,7 +36,7 @@ yarn-error.log*
 .env.local
 .env*.local
 .env.backup
-
+.env.production
 # Optional: Uncommenting the line below will allow .env.example and .env.production to be committed for documentation purposes
 # .env.production can be committed if it only contains references/examples
 # but make sure it doesn't contain real production secrets
