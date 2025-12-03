@@ -11,6 +11,7 @@ import { FiShare2 } from "react-icons/fi";
 import { LuStar } from "react-icons/lu";
 import { RxBorderSplit } from "react-icons/rx";
 import { TbTruckDelivery } from "react-icons/tb";
+import ProductVariantSelector from "@/components/ProductVariantSelector";
 
 // export const dynamic = "force-static";
 // export const revalidate = 60;
@@ -61,16 +62,23 @@ const ProductPage = async ({
               <p className="text-sm font-medium text-gray-500">{`(25 reviews)`}</p>
             </div>
           </div>
-          <PriceView
-            price={product?.price}
-            discount={product?.discount}
-            label={product?.label}
-            className="text-lg font-bold"
-          />
-          {product?.stock && (
-            <p className="bg-green-100 w-24 text-center text-green-600 text-sm py-2.5 font-semibold rounded-lg">
-              In Stock
-            </p>
+
+          {product?.hasVariants ? (
+            <ProductVariantSelector product={product} />
+          ) : (
+            <>
+              <PriceView
+                price={product?.price}
+                discount={product?.discount}
+                label={product?.label}
+                className="text-lg font-bold"
+              />
+              {product?.stock && (
+                <p className="bg-green-100 w-24 text-center text-green-600 text-sm py-2.5 font-semibold rounded-lg">
+                  In Stock
+                </p>
+              )}
+            </>
           )}
 
           <p className="text-base text-gray-800">
@@ -83,7 +91,10 @@ const ProductPage = async ({
           <p className="text-sm text-gray-600 tracking-wide">
             {product?.description}
           </p>
-          <AddToCartButton product={product} className="w-full mb-4" />
+
+          {!product?.hasVariants && (
+            <AddToCartButton product={product} className="w-full mb-4" />
+          )}
           <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-b-gray-200 py-5 -mt-2">
             <div className="flex items-center gap-2 text-sm text-black hover:text-red-600 hoverEffect">
               <RxBorderSplit className="text-lg" />

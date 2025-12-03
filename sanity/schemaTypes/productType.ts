@@ -84,6 +84,68 @@ export const productType = defineType({
         ],
       },
     }),
+    defineField({
+      name: "hasVariants",
+      title: "Enable Size & Height Variants",
+      type: "boolean",
+      description: "Check this if product price depends on size and height",
+      initialValue: false,
+    }),
+    defineField({
+      name: "priceVariants",
+      title: "Price Variants",
+      type: "array",
+      description: "Add different prices for size and height combinations",
+      hidden: ({ parent }) => !parent?.hasVariants,
+      of: [
+        {
+          type: "object",
+          fields: [
+            {
+              name: "size",
+              title: "Size",
+              type: "reference",
+              to: [{ type: "size" }],
+              validation: (Rule) => Rule.required(),
+            },
+            {
+              name: "height",
+              title: "Height",
+              type: "reference",
+              to: [{ type: "height" }],
+              validation: (Rule) => Rule.required(),
+            },
+            {
+              name: "price",
+              title: "Price",
+              type: "number",
+              validation: (Rule) => Rule.required().min(0),
+            },
+            {
+              name: "stock",
+              title: "Stock",
+              type: "number",
+              validation: (Rule) => Rule.min(0),
+              initialValue: 0,
+            },
+          ],
+          preview: {
+            select: {
+              sizeName: "size.name",
+              heightName: "height.name",
+              price: "price",
+              stock: "stock",
+            },
+            prepare({ sizeName, heightName, price, stock }) {
+              return {
+                title: `${sizeName} - ${heightName}`,
+                subtitle: `$${price} (Stock: ${stock})`,
+              };
+            },
+          },
+        },
+      ],
+    }),
   ],
   preview: {
     select: {

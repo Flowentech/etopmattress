@@ -14,6 +14,8 @@ import { wishlistType } from './wishlistType'
 import { emailSubscriberType } from './emailSubscriberType'
 import blogCategoryType from './blogCategoryType'
 import userProfile from './userProfile'
+import { sizeType } from './sizeType'
+import { heightType } from './heightType'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -21,6 +23,8 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     categoryType,
     navigationCategory,
     productType,
+    sizeType,
+    heightType,
     salesType,
     orderType,
     reviewType,

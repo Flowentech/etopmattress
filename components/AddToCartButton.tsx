@@ -25,16 +25,30 @@ const AddToCartButton = ({ product, className = "" }: AddToCartButtonProps) => {
     setTimeout(() => setIsAdded(false), 2000);
   };
 
-  const itemQuantity = mounted ? getItemCount(product._id || "") : 0;
+  // Generate unique ID for variants (product_id + variant info)
+  const getItemId = () => {
+    if ((product as any).selectedVariant) {
+      const variant = (product as any).selectedVariant;
+      return `${product._id}_${variant.sizeId}_${variant.heightId}`;
+    }
+    return product._id || "";
+  };
+
+  // Check stock - for variants, use variant stock
+  const currentStock = (product as any).selectedVariant
+    ? (product as any).selectedVariant.stock
+    : product?.stock;
+
+  const itemQuantity = mounted ? getItemCount(getItemId()) : 0;
 
   return (
     <button
       onClick={handleAddToCart}
-      disabled={product?.stock === 0}
+      disabled={currentStock === 0}
       className={`
         ${className}
         ${
-          product?.stock === 0
+          currentStock === 0
             ? "bg-gray-200 text-gray-500 cursor-not-allowed"
             : isAdded
             ? "bg-primary text-white"
@@ -43,7 +57,7 @@ const AddToCartButton = ({ product, className = "" }: AddToCartButtonProps) => {
         px-4 py-2 rounded-md transition-all duration-300 flex items-center justify-center gap-2 text-[10px] font-medium
       `}
     >
-      {product?.stock === 0 ? (
+      {currentStock === 0 ? (
         "Out of Stock"
       ) : isAdded ? (
         <>

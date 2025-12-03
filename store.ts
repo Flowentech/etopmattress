@@ -19,19 +19,38 @@ interface CartState {
   getGroupedItems: () => CartItem[];
 }
 
+// Helper function to get unique item identifier (supports variants)
+const getItemIdentifier = (product: Product): string => {
+  const variant = (product as any).selectedVariant;
+  if (variant) {
+    return `${product._id}_${variant.sizeId}_${variant.heightId}`;
+  }
+  return product._id || "";
+};
+
+// Helper function to get product price (supports variants)
+const getProductPrice = (product: Product): number => {
+  const variant = (product as any).selectedVariant;
+  if (variant) {
+    return variant.price ?? 0;
+  }
+  return product.price ?? 0;
+};
+
 const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [] as CartItem[],
       addItem: (product) =>
         set((state) => {
+          const itemId = getItemIdentifier(product);
           const existingItem = state.items.find(
-            (item) => item.product._id === product._id
+            (item) => getItemIdentifier(item.product) === itemId
           );
           if (existingItem) {
             return {
               items: state.items.map((item) =>
-                item.product._id === product._id
+                getItemIdentifier(item.product) === itemId
                   ? { ...item, quantity: item.quantity + 1 }
                   : item
               ),
@@ -43,7 +62,8 @@ const useCartStore = create<CartState>()(
       removeItem: (productId) =>
         set((state) => ({
           items: state.items.reduce((acc, item) => {
-            if (item.product._id === productId) {
+            const itemId = getItemIdentifier(item.product);
+            if (itemId === productId) {
               if (item.quantity > 1) {
                 acc.push({ ...item, quantity: item.quantity - 1 });
               }
@@ -56,37 +76,37 @@ const useCartStore = create<CartState>()(
       deleteCartProduct: (productId) =>
         set((state) => ({
           items: state.items.filter(
-            ({ product }) => product?._id !== productId
+            ({ product }) => getItemIdentifier(product) !== productId
           ),
         })),
       resetCart: () => set({ items: [] }),
       getTotalPrice: () => {
         return get().items.reduce(
-          (total, item) => total + (item.product.price ?? 0) * item.quantity,
+          (total, item) => total + getProductPrice(item.product) * item.quantity,
           0
         );
       },
       getSubTotalPrice: () => {
         return get().items.reduce((total, item) => {
-          const price = item.product.price ?? 0;
+          const price = getProductPrice(item.product);
           const discount = ((item.product.discount ?? 0) * price) / 100;
           const discountedPrice = price + discount;
           return total + discountedPrice * item.quantity;
         }, 0);
       },
       getItemCount: (productId) => {
-        const item = get().items.find((item) => item.product._id === productId);
+        const item = get().items.find((item) => getItemIdentifier(item.product) === productId);
         return item ? item.quantity : 0;
       },
       getGroupedItems: () => get().items,
     }),
     {
       name: "cart-store",
-      version: 1,
+      version: 2,
       migrate: (persistedState: any, version: number) => {
-        if (version === 0) {
-          // Migration from version 0 to 1
-          return persistedState;
+        if (version < 2) {
+          // Migration to version 2 - reset cart to handle new variant structure
+          return { ...persistedState, items: [] };
         }
         return persistedState;
       },

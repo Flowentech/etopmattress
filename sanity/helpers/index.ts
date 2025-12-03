@@ -111,7 +111,29 @@ export const searchProductsByName = async (searchParam: string) => {
 
 export const getProductBySlug = async (slug: string) => {
   const PRODUCT_BY_ID_QUERY = defineQuery(
-    `*[_type == "product" && slug.current == $slug] | order(name asc) [0]`
+    `*[_type == "product" && slug.current == $slug] | order(name asc) [0] {
+      ...,
+      hasVariants,
+      priceVariants[] {
+        price,
+        stock,
+        size-> {
+          _id,
+          name,
+          slug,
+          width,
+          length,
+          displayOrder
+        },
+        height-> {
+          _id,
+          name,
+          slug,
+          value,
+          displayOrder
+        }
+      }
+    }`
   );
 
   try {
