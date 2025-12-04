@@ -65,7 +65,7 @@ const Contact = () => {
     },
     {
       title: 'Address',
-      value: 'Uttora, Diya-bari, Dhaka, Bangladesh',
+      value: 'Chayabithi mashjid, Bashabo 1000 Khilgaon, Bangladesh',
       icon: '📍'
     },
     {
