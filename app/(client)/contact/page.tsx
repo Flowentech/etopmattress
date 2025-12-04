@@ -80,8 +80,8 @@ const Contact = () => {
             Contact <span className="text-primary">Us</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            {`Ready to transform your space? Have questions about our services? 
-            We'd love to hear from you and help you create your perfect green environment. `}
+            {`Ready to upgrade your sleep? Have questions about our mattresses?
+            We'd love to hear from you and help you find the perfect mattress for better rest. `}
           </p>
         </div>
 
@@ -143,7 +143,7 @@ const Contact = () => {
                       value={formData.subject}
                       onChange={handleChange}
                       className="mt-1"
-                      placeholder="Interior Design Consultation"
+                      placeholder="Mattress Consultation"
                     />
                   </div>
                 </div>
@@ -157,7 +157,7 @@ const Contact = () => {
                     value={formData.message}
                     onChange={handleChange}
                     className="mt-1 min-h-32"
-                    placeholder="Tell us about your space and what you're looking for..."
+                    placeholder="Tell us about your sleep needs and what you're looking for..."
                   />
                 </div>
                 
@@ -177,8 +177,8 @@ const Contact = () => {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Get in Touch</h2>
               <p className="text-gray-600 mb-8">
-                {`We're here to help you bring your plant dreams to life. Whether you need a consultation, 
-                have questions about care, or want to discuss a custom project, don't hesitate to reach out.`}
+                {`We're here to help you find the perfect mattress for better sleep. Whether you need a consultation,
+                have questions about our products, or want to discuss delivery options, don't hesitate to reach out.`}
               </p>
             </div>
 
@@ -235,26 +235,26 @@ const Contact = () => {
         <section className="bg-white rounded-2xl p-8 md:p-12 mb-16 shadow-sm">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
-            <p className="text-gray-600">Quick answers to common questions about our services</p>
+            <p className="text-gray-600">Quick answers to common questions about our mattresses and services</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {[
               {
-                question: 'How long does a consultation take?',
-                answer: 'Initial consultations typically take 60-90 minutes, depending on the size and complexity of your space.'
+                question: 'What sizes of mattresses do you offer?',
+                answer: 'We offer all standard sizes including Twin, Full, Queen, King, and California King. Custom sizes are also available upon request.'
               },
               {
-                question: 'Do you provide plant maintenance?',
-                answer: 'Yes! We offer ongoing maintenance services and provide detailed care instructions for all plants.'
+                question: 'Do you provide home delivery?',
+                answer: 'Yes! We offer free home delivery and setup within Dhaka. We also provide installation services to ensure your mattress is perfectly placed.'
               },
               {
-                question: 'What areas do you serve?',
-                answer: 'We currently serve the greater metropolitan area within a 50-mile radius of our main location.'
+                question: 'What is your return policy?',
+                answer: 'We offer a 30-day comfort guarantee. If you are not satisfied with your mattress, you can exchange it or get a full refund.'
               },
               {
-                question: 'Can you work with my budget?',
-                answer: 'Absolutely! We offer solutions for various budgets and can customize packages to meet your needs.'
+                question: 'Do you have financing options?',
+                answer: 'Yes! We offer flexible payment plans and financing options to make your purchase more affordable. Contact us to learn more.'
               }
             ].map((faq, index) => (
               <div key={index} className="space-y-2">
