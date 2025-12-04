@@ -50,7 +50,12 @@ const Contact = () => {
   const contactInfo = [
     {
       title: 'Phone',
-      value: '+880 1723560 254',
+      value: '01317770555',
+      icon: '📞'
+    },
+    {
+      title: 'Phone',
+      value: '01838496666',
       icon: '📞'
     },
     {
