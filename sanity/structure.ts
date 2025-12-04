@@ -5,10 +5,13 @@ export const structure: StructureResolver = (S) =>
   S.list()
     .title("Interio Admin")
     .items([
+      S.documentTypeListItem("product").title("Products"),
       S.documentTypeListItem("category").title("Categories"),
+      S.documentTypeListItem("size").title("Sizes"),
+      S.documentTypeListItem("height").title("Heights"),
 
       S.divider(),
       ...S.documentTypeListItems().filter(
-        (item) => item.getId() && !["category"].includes(item.getId()!)
+        (item) => item.getId() && !["product", "category", "size", "height"].includes(item.getId()!)
       ),
     ]);

@@ -1,11 +1,11 @@
-import { RulerIcon } from "@sanity/icons";
+import { ExpandIcon } from "@sanity/icons";
 import { defineField, defineType } from "sanity";
 
 export const sizeType = defineType({
   name: "size",
   title: "Sizes",
   type: "document",
-  icon: RulerIcon,
+  icon: ExpandIcon,
   fields: [
     defineField({
       name: "name",
