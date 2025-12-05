@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { client } from "@/sanity/lib/backendClient";
+import { backendClient } from "@/sanity/lib/backendClient";
 
 // GET - Fetch all sizes
 export async function GET() {
   try {
-    const sizes = await client.fetch(
+    const sizes = await backendClient.fetch(
       `*[_type == "size"] | order(displayOrder asc, name asc) {
         _id,
         name,
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-    const newSize = await client.create({
+    const newSize = await backendClient.create({
       _type: "size",
       name,
       slug: { current: slug, _type: "slug" },
@@ -94,7 +94,7 @@ export async function PUT(req: NextRequest) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-    const updatedSize = await client
+    const updatedSize = await backendClient
       .patch(id)
       .set({
         name,
@@ -131,7 +131,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    await client.delete(id);
+    await backendClient.delete(id);
 
     return NextResponse.json(
       { message: "Size deleted successfully" },

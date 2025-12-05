@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { client } from "@/sanity/lib/backendClient";
+import { backendClient } from "@/sanity/lib/backendClient";
 
 // GET - Fetch all heights
 export async function GET() {
   try {
-    const heights = await client.fetch(
+    const heights = await backendClient.fetch(
       `*[_type == "height"] | order(displayOrder asc, value asc) {
         _id,
         name,
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-    const newHeight = await client.create({
+    const newHeight = await backendClient.create({
       _type: "height",
       name,
       slug: { current: slug, _type: "slug" },
@@ -92,7 +92,7 @@ export async function PUT(req: NextRequest) {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-    const updatedHeight = await client
+    const updatedHeight = await backendClient
       .patch(id)
       .set({
         name,
@@ -128,7 +128,7 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    await client.delete(id);
+    await backendClient.delete(id);
 
     return NextResponse.json(
       { message: "Height deleted successfully" },
