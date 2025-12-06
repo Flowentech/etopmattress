@@ -61,8 +61,8 @@ const Gallery = ({ galleryItems }: GalleryProps) => {
               onClick={() => setSelectedCategory(category)}
               className={`${
                 selectedCategory === category
-                  ? 'bg-primary hover:bg-primary/90 text-white'
-                  : 'border-primary text-primary hover:bg-primary/10'
+                  ? 'bg-primary hover:bg-primary/80 text-white'
+                  : 'border-white text-primary '
               }`}
             >
               {category}
@@ -102,7 +102,7 @@ const Gallery = ({ galleryItems }: GalleryProps) => {
                       View Details
                     </Button>
                   </div>
-                  <div className="absolute top-4 left-4 bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">
+                  <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
                     {item.category}
                   </div>
                   {item.isFeatured && (
@@ -118,7 +118,7 @@ const Gallery = ({ galleryItems }: GalleryProps) => {
                     <div className="mt-3">
                       <div className="flex flex-wrap gap-1">
                         {item.features.slice(0, 2).map((feature, index) => (
-                          <span key={index} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                          <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                             {feature}
                           </span>
                         ))}
@@ -133,12 +133,12 @@ const Gallery = ({ galleryItems }: GalleryProps) => {
         </div>
 
         {/* Stats Section */}
-        <section className="bg-primary text-white rounded-2xl p-8 md:p-12 mb-16">
+        <section className="bg-blue-600 text-white rounded-2xl p-8 md:p-12 mb-16">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-4">Why Choose Etopmattress</h2>
-            <p className="text-primary-foreground/80">Premium comfort and quality sleep solutions</p>
+            <p className="text-blue-100">Premium comfort and quality sleep solutions</p>
           </div>
-
+          
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { number: '10k+', label: 'Happy Customers' },
@@ -148,7 +148,7 @@ const Gallery = ({ galleryItems }: GalleryProps) => {
             ].map((stat, index) => (
               <div key={index}>
                 <div className="text-3xl md:text-4xl font-bold mb-2">{stat.number}</div>
-                <div className="text-primary-foreground/80">{stat.label}</div>
+                <div className="text-blue-100">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -163,10 +163,10 @@ const Gallery = ({ galleryItems }: GalleryProps) => {
             Experience the difference quality sleep can make. Our expert team is ready to help you find the ideal mattress for your needs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button className="bg-primary hover:bg-primary/90 text-white px-8 py-3">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3">
               Shop Now
             </Button>
-            <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 px-8 py-3">
+            <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3">
               Get Consultation
             </Button>
           </div>
@@ -206,7 +206,7 @@ const Gallery = ({ galleryItems }: GalleryProps) => {
                 })()}
                 
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-medium">
+                  <span className="bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full text-sm font-medium">
                     {selectedImage.category}
                   </span>
                   {selectedImage.isFeatured && (
@@ -229,7 +229,7 @@ const Gallery = ({ galleryItems }: GalleryProps) => {
                     <ul className="space-y-2">
                       {selectedImage.features.map((feature, index) => (
                         <li key={index} className="flex items-start text-gray-700">
-                          <span className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0"></span>
+                          <span className="w-2 h-2 bg-blue-600 rounded-full mr-3 mt-2 flex-shrink-0"></span>
                           <span>{feature}</span>
                         </li>
                       ))}

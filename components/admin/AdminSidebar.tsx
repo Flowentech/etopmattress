@@ -17,12 +17,16 @@ import {
   Image as ImageIcon,
   ChevronDown,
   ChevronRight,
-  FolderOpen
+  FolderOpen,
+  Ruler,
+  Maximize
 } from 'lucide-react';
 
 const mainNavigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Categories', href: '/admin/categories', icon: Tag },
+  { name: 'Sizes', href: '/admin/sizes', icon: Maximize },
+  { name: 'Heights', href: '/admin/heights', icon: Ruler },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Employees', href: '/admin/employees', icon: UserCheck },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },

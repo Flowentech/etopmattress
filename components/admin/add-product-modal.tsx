@@ -31,6 +31,23 @@ interface Category {
   slug: { current: string };
 }
 
+interface Size {
+  _id: string;
+  name: string;
+}
+
+interface Height {
+  _id: string;
+  name: string;
+}
+
+interface PriceVariant {
+  size: string;
+  height: string;
+  price: string;
+  stock: string;
+}
+
 interface AddProductModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -41,6 +58,8 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }: AddProdu
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [navigationCategories, setNavigationCategories] = useState<Category[]>([]);
+  const [sizes, setSizes] = useState<Size[]>([]);
+  const [heights, setHeights] = useState<Height[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -54,12 +73,16 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }: AddProdu
     isApproved: true,
     categories: [] as string[],
     navigationCategories: [] as string[],
+    hasVariants: false,
+    priceVariants: [] as PriceVariant[],
   });
 
   useEffect(() => {
     if (isOpen) {
       loadCategories();
       loadNavigationCategories();
+      loadSizes();
+      loadHeights();
     }
   }, [isOpen]);
 
@@ -106,6 +129,30 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }: AddProdu
     } catch (error) {
       console.error('Error loading navigation categories:', error);
       // Don't show error toast - navigation categories are optional
+    }
+  };
+
+  const loadSizes = async () => {
+    try {
+      const response = await fetch('/api/admin/sizes');
+      if (!response.ok) throw new Error('Failed to fetch sizes');
+      const result = await response.json();
+      setSizes(result.sizes || []);
+    } catch (error) {
+      console.error('Error loading sizes:', error);
+      toast.error('Failed to load sizes');
+    }
+  };
+
+  const loadHeights = async () => {
+    try {
+      const response = await fetch('/api/admin/heights');
+      if (!response.ok) throw new Error('Failed to fetch heights');
+      const result = await response.json();
+      setHeights(result.heights || []);
+    } catch (error) {
+      console.error('Error loading heights:', error);
+      toast.error('Failed to load heights');
     }
   };
 
@@ -161,8 +208,33 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }: AddProdu
       isApproved: true,
       categories: [],
       navigationCategories: [],
+      hasVariants: false,
+      priceVariants: [],
     });
     onClose();
+  };
+
+  const addPriceVariant = () => {
+    setFormData((prev) => ({
+      ...prev,
+      priceVariants: [...prev.priceVariants, { size: '', height: '', price: '', stock: '' }],
+    }));
+  };
+
+  const removePriceVariant = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      priceVariants: prev.priceVariants.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updatePriceVariant = (index: number, field: keyof PriceVariant, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      priceVariants: prev.priceVariants.map((variant, i) =>
+        i === index ? { ...variant, [field]: value } : variant
+      ),
+    }));
   };
 
   const handleCategoryToggle = (categoryId: string) => {
@@ -367,6 +439,129 @@ export default function AddProductModal({ isOpen, onClose, onSuccess }: AddProdu
               )}
             </div>
           )}
+
+          {/* Size & Height Variants */}
+          <div className="space-y-2 border-t pt-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hasVariants"
+                checked={formData.hasVariants}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, hasVariants: checked as boolean, priceVariants: checked ? formData.priceVariants : [] })
+                }
+              />
+              <label
+                htmlFor="hasVariants"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Enable Size & Height Variants
+              </label>
+            </div>
+            <p className="text-xs text-gray-500">
+              Check this if product price depends on size and height combinations
+            </p>
+
+            {formData.hasVariants && (
+              <div className="space-y-3 mt-4">
+                <div className="flex items-center justify-between">
+                  <Label>Price Variants</Label>
+                  <Button type="button" size="sm" onClick={addPriceVariant}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Variant
+                  </Button>
+                </div>
+
+                {formData.priceVariants.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4 border rounded-md">
+                    No variants added yet. Click "Add Variant" to create size/height combinations.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {formData.priceVariants.map((variant, index) => (
+                      <div key={index} className="border rounded-md p-3 space-y-3 bg-gray-50">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Variant {index + 1}</span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removePriceVariant(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor={`variant-size-${index}`} className="text-xs">Size</Label>
+                            <Select
+                              value={variant.size}
+                              onValueChange={(value) => updatePriceVariant(index, 'size', value)}
+                            >
+                              <SelectTrigger id={`variant-size-${index}`}>
+                                <SelectValue placeholder="Select size" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {sizes.map((size) => (
+                                  <SelectItem key={size._id} value={size._id}>
+                                    {size.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label htmlFor={`variant-height-${index}`} className="text-xs">Height</Label>
+                            <Select
+                              value={variant.height}
+                              onValueChange={(value) => updatePriceVariant(index, 'height', value)}
+                            >
+                              <SelectTrigger id={`variant-height-${index}`}>
+                                <SelectValue placeholder="Select height" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {heights.map((height) => (
+                                  <SelectItem key={height._id} value={height._id}>
+                                    {height.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label htmlFor={`variant-price-${index}`} className="text-xs">Price</Label>
+                            <Input
+                              id={`variant-price-${index}`}
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={variant.price}
+                              onChange={(e) => updatePriceVariant(index, 'price', e.target.value)}
+                              placeholder="0.00"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label htmlFor={`variant-stock-${index}`} className="text-xs">Stock</Label>
+                            <Input
+                              id={`variant-stock-${index}`}
+                              type="number"
+                              min="0"
+                              value={variant.stock}
+                              onChange={(e) => updatePriceVariant(index, 'stock', e.target.value)}
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>

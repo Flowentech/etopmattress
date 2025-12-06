@@ -11,7 +11,10 @@ export const structure: StructureResolver = (S) =>
       S.documentTypeListItem("height").title("Heights"),
 
       S.divider(),
+      S.documentTypeListItem("userProfile").title("Users"),
+
+      S.divider(),
       ...S.documentTypeListItems().filter(
-        (item) => item.getId() && !["product", "category", "size", "height"].includes(item.getId()!)
+        (item) => item.getId() && !["product", "category", "size", "height", "userProfile"].includes(item.getId()!)
       ),
     ]);

@@ -93,9 +93,20 @@ export default function GalleryManagement() {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [pagination, setPagination] = useState<GalleryResponse['pagination'] | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    slug: '',
+    category: 'Living Room' as GalleryItem['category'],
+    image: '',
+    description: '',
+    features: '',
+    isFeatured: false
+  });
 
   useEffect(() => {
     loadGallery();
@@ -143,6 +154,60 @@ export default function GalleryManagement() {
       setGallery([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddItem = () => {
+    setFormData({
+      title: '',
+      slug: '',
+      category: 'Living Room',
+      image: '',
+      description: '',
+      features: '',
+      isFeatured: false
+    });
+    setAddDialogOpen(true);
+  };
+
+  const handleCreateItem = async () => {
+    if (!formData.title || !formData.slug || !formData.description) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      const response = await fetch('/api/admin/gallery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          _type: 'gallery',
+          title: formData.title,
+          slug: { _type: 'slug', current: formData.slug },
+          category: formData.category,
+          image: formData.image || undefined,
+          description: formData.description,
+          features: formData.features ? formData.features.split(',').map(f => f.trim()).filter(f => f) : [],
+          isFeatured: formData.isFeatured
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Gallery item created successfully');
+        loadGallery();
+        setAddDialogOpen(false);
+      } else {
+        const errorMessage = result.error?.message || result.error || 'Failed to create gallery item';
+        toast.error(errorMessage);
+      }
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Failed to create gallery item';
+      toast.error(errorMessage);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -276,7 +341,7 @@ export default function GalleryManagement() {
           <h2 className="text-2xl font-bold text-gray-900">Gallery Management</h2>
           <p className="text-gray-600">Manage gallery items and showcase projects</p>
         </div>
-        <Button>
+        <Button onClick={handleAddItem}>
           <Plus className="h-4 w-4 mr-2" />
           Add Gallery Item
         </Button>
@@ -499,7 +564,7 @@ export default function GalleryManagement() {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No Gallery Items Yet</h3>
               <p className="text-gray-600 mb-4">There are no gallery items in the system yet.</p>
-              <Button>
+              <Button onClick={handleAddItem}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Gallery Item
               </Button>
@@ -507,6 +572,101 @@ export default function GalleryManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Add Gallery Item Dialog */}
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Gallery Item</DialogTitle>
+            <DialogDescription>
+              Create a new gallery item to showcase your project
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Title *</label>
+              <Input
+                placeholder="Enter gallery item title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Slug *</label>
+              <Input
+                placeholder="enter-slug-here"
+                value={formData.slug}
+                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Category *</label>
+              <Select
+                value={formData.category}
+                onValueChange={(value) => setFormData({ ...formData, category: value as GalleryItem['category'] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Living Room">Living Room</SelectItem>
+                  <SelectItem value="Office">Office</SelectItem>
+                  <SelectItem value="Bedroom">Bedroom</SelectItem>
+                  <SelectItem value="Kitchen">Kitchen</SelectItem>
+                  <SelectItem value="Outdoor">Outdoor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Image URL (optional)</label>
+              <Input
+                placeholder="https://example.com/image.jpg"
+                value={formData.image}
+                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description *</label>
+              <Input
+                placeholder="Enter description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Features (comma-separated)</label>
+              <Input
+                placeholder="Feature 1, Feature 2, Feature 3"
+                value={formData.features}
+                onChange={(e) => setFormData({ ...formData, features: e.target.value })}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isFeatured"
+                checked={formData.isFeatured}
+                onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                className="h-4 w-4"
+              />
+              <label htmlFor="isFeatured" className="text-sm font-medium">
+                Mark as Featured
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateItem}
+              disabled={isCreating}
+            >
+              {isCreating ? 'Creating...' : 'Create Gallery Item'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

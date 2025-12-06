@@ -30,6 +30,11 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'profilePicture',
+      title: 'Profile Picture',
+      type: 'string',
+    }),
+    defineField({
       name: 'role',
       title: 'Role',
       type: 'string',

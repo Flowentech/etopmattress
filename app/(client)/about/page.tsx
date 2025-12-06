@@ -169,7 +169,7 @@ const About = () => {
         </section>
 
         {/* Team Section */}
-        <section className="mb-20">
+        {/* <section className="mb-20">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Meet Our Team
@@ -189,7 +189,7 @@ const About = () => {
                 <CardContent className="p-6">
                   <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
                     <Image src={member.image} alt={member.name} width={96} height={96} className="rounded-full w-24 h-24 object-fill" />
-                    {/* <span className="text-gray-500 text-2xl">👤</span> */}
+                  
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">
                     {member.name}
@@ -202,7 +202,7 @@ const About = () => {
               </Card>
             ))}
           </div>
-        </section>
+        </section> */}
 
         {/* Mission Section */}
         <section className="bg-primary text-white rounded-2xl p-8 md:p-12 mb-16">
@@ -242,14 +242,14 @@ const About = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              className="bg-primary hover:bg-green-700 text-white px-8 py-3 cursor-pointer rounded-lg"
+              className="bg-primary hover:bg-primary/80 text-white px-8 py-3 cursor-pointer rounded-lg"
               href="/shop"
             >
               Shop Mattresses
             </Link>
             <Link
               href="/contact"
-              className="bg-primary hover:bg-green-700 text-white px-8 py-3 cursor-pointer rounded-lg"
+              className="bg-primary hover:bg-primary/80 text-white px-8 py-3 cursor-pointer rounded-lg"
             >
               Contact Us
             </Link>

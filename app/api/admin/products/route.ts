@@ -336,7 +336,9 @@ export async function POST(req: NextRequest) {
         storeId,
         categories,
         navigationCategories,
-        imageUrl
+        imageUrl,
+        hasVariants,
+        priceVariants
       } = body;
 
       // Validate required fields
@@ -372,6 +374,7 @@ export async function POST(req: NextRequest) {
         stock: parseInt(stock) || 0,
         label: label || '',
         status: status || 'new',
+        isApproved: typeof isApproved === 'boolean' ? isApproved : true,
         _createdAt: new Date().toISOString(),
         _updatedAt: new Date().toISOString()
       };
@@ -395,6 +398,23 @@ export async function POST(req: NextRequest) {
             _ref: imageUrl
           }
         };
+      }
+
+      // Add variants if provided
+      if (hasVariants) {
+        productData.hasVariants = true;
+        if (priceVariants && priceVariants.length > 0) {
+          productData.priceVariants = priceVariants.map((variant: any) => ({
+            _type: 'object',
+            _key: Math.random().toString(36).substring(7), // Generate unique key
+            size: { _type: 'reference', _ref: variant.size },
+            height: { _type: 'reference', _ref: variant.height },
+            price: parseFloat(variant.price) || 0,
+            stock: parseInt(variant.stock) || 0
+          }));
+        }
+      } else {
+        productData.hasVariants = false;
       }
 
       // Create product in Sanity
