@@ -60,6 +60,7 @@ import {
 import { toast } from 'react-hot-toast';
 import BulkUploadModal from '@/components/admin/bulk-upload-modal';
 import AddProductModal from '@/components/admin/add-product-modal';
+import EditProductModal from '@/components/admin/edit-product-modal';
 
 interface Product {
   _id: string;
@@ -79,6 +80,18 @@ interface Product {
     _id: string;
     title: string;
     slug: { current: string };
+  }>;
+  navigationcategory?: Array<{
+    _id: string;
+    title: string;
+    slug: { current: string };
+  }>;
+  hasVariants?: boolean;
+  priceVariants?: Array<{
+    size: { _id: string; name?: string };
+    height: { _id: string; name?: string };
+    price: number;
+    stock: number;
   }>;
 }
 
@@ -137,6 +150,8 @@ export default function ProductsPage() {
   });
   const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
+  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
 
   useEffect(() => {
     loadProducts();
@@ -550,6 +565,16 @@ export default function ProductsPage() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setProductToEdit(product);
+                            setIsEditProductModalOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
                         {!product.isApproved && (
                           <Button
                             variant="outline"
@@ -751,6 +776,21 @@ export default function ProductsPage() {
           handleRefresh();
           setIsAddProductModalOpen(false);
         }}
+      />
+
+      {/* Edit Product Modal */}
+      <EditProductModal
+        isOpen={isEditProductModalOpen}
+        onClose={() => {
+          setIsEditProductModalOpen(false);
+          setProductToEdit(null);
+        }}
+        onSuccess={() => {
+          handleRefresh();
+          setIsEditProductModalOpen(false);
+          setProductToEdit(null);
+        }}
+        product={productToEdit}
       />
 
       {/* Bulk Upload Modal */}

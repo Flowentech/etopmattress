@@ -73,9 +73,21 @@ export async function GET(req: NextRequest) {
       label,
       status,
       isApproved,
+      hasVariants,
+      priceVariants[]{
+        "size": size->{_id, name},
+        "height": height->{_id, name},
+        price,
+        stock
+      },
       _createdAt,
       _updatedAt,
       "categories": categories[]->{
+        _id,
+        title,
+        slug
+      },
+      "navigationcategory": navigationcategory[]->{
         _id,
         title,
         slug
@@ -239,6 +251,145 @@ export async function PATCH(req: NextRequest) {
     return api.error('Failed to update product', {
       code: 'PRODUCT_UPDATE_ERROR',
       status: 500
+    });
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const user = await currentUser();
+
+    if (!user) {
+      return api.error('Unauthorized', {
+        code: 'UNAUTHORIZED',
+        status: 401
+      });
+    }
+
+    // Check if user is admin
+    const userProfile = await client.fetch(`
+      *[_type == "userProfile" && clerkId == $clerkId][0] {
+        role
+      }
+    `, { clerkId: user.id });
+
+    if (!userProfile || !['admin', 'super_admin'].includes(userProfile.role)) {
+      return api.error('Forbidden', {
+        code: 'FORBIDDEN',
+        status: 403
+      });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const productId = searchParams.get('id');
+
+    if (!productId) {
+      return api.error('Product ID is required', {
+        code: 'VALIDATION_ERROR',
+        status: 400
+      });
+    }
+
+    const body = await req.json();
+    const {
+      name,
+      description,
+      price,
+      discount,
+      stock,
+      status,
+      label,
+      isApproved,
+      categories,
+      navigationCategories,
+      hasVariants,
+      priceVariants
+    } = body;
+
+    // Validate required fields
+    if (!name || !price) {
+      return api.error('Missing required fields: name and price are required', {
+        code: 'VALIDATION_ERROR',
+        status: 400
+      });
+    }
+
+    if (!categories || categories.length === 0) {
+      return api.error('At least one category is required', {
+        code: 'VALIDATION_ERROR',
+        status: 400
+      });
+    }
+
+    // Generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    // Prepare update data
+    const updateData: any = {
+      name,
+      slug: { _type: 'slug', current: slug },
+      description: description || '',
+      price: parseFloat(price) || 0,
+      discount: parseFloat(discount) || 0,
+      stock: parseInt(stock) || 0,
+      label: label || '',
+      status: status || 'new',
+      isApproved: typeof isApproved === 'boolean' ? isApproved : true,
+      _updatedAt: new Date().toISOString()
+    };
+
+    // Update categories
+    if (categories && categories.length > 0) {
+      updateData.categories = categories.map((id: string) => ({ _type: 'reference', _ref: id }));
+    }
+
+    // Update navigation categories
+    if (navigationCategories && navigationCategories.length > 0) {
+      updateData.navigationcategory = navigationCategories.map((id: string) => ({ _type: 'reference', _ref: id }));
+    } else {
+      updateData.navigationcategory = [];
+    }
+
+    // Update variants
+    if (hasVariants) {
+      updateData.hasVariants = true;
+      if (priceVariants && priceVariants.length > 0) {
+        updateData.priceVariants = priceVariants.map((variant: any) => ({
+          _type: 'object',
+          _key: Math.random().toString(36).substring(7),
+          size: { _type: 'reference', _ref: variant.size },
+          height: { _type: 'reference', _ref: variant.height },
+          price: parseFloat(variant.price) || 0,
+          stock: parseInt(variant.stock) || 0
+        }));
+      } else {
+        updateData.priceVariants = [];
+      }
+    } else {
+      updateData.hasVariants = false;
+      updateData.priceVariants = [];
+    }
+
+    // Update product
+    const updatedProduct = await client
+      .patch(productId)
+      .set(updateData)
+      .commit();
+
+    return api.success({
+      message: 'Product updated successfully',
+      product: updatedProduct
+    });
+
+  } catch (error) {
+    console.error('Error updating product:', error);
+    return api.error('Failed to update product', {
+      code: 'PRODUCT_UPDATE_ERROR',
+      status: 500,
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }
