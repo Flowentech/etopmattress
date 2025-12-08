@@ -8,6 +8,7 @@ import { blogType } from './blogType'
 import { authorType } from './authorType'
 import { contactType } from './contactType'
 import { galleryType } from './galleryType'
+import { galleryCategoryType } from './galleryCategoryType'
 import { navigationCategory } from './navigationCategoryType'
 import { reviewType } from './reviewType'
 import { wishlistType } from './wishlistType'
@@ -34,6 +35,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     authorType,
     contactType,
     galleryType,
+    galleryCategoryType,
     blogCategoryType,
     userProfile,
   ],

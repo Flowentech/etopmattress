@@ -54,7 +54,7 @@ interface GalleryItem {
   _id: string;
   title: string;
   slug: string;
-  category: 'Living Room' | 'Office' | 'Bedroom' | 'Kitchen' | 'Outdoor';
+  category: 'Memory Foam' | 'Latex' | 'Hybrid' | 'Cooling Gel' | 'Orthopedic';
   image?: string;
   description: string;
   detailedDescription?: any[];
@@ -76,11 +76,11 @@ interface GalleryResponse {
 }
 
 const categoryColors: Record<string, string> = {
-  'Living Room': 'bg-blue-100 text-blue-800 border-blue-200',
-  'Office': 'bg-gray-100 text-gray-800 border-gray-200',
-  'Bedroom': 'bg-purple-100 text-purple-800 border-purple-200',
-  'Kitchen': 'bg-green-100 text-green-800 border-green-200',
-  'Outdoor': 'bg-orange-100 text-orange-800 border-orange-200',
+  'Memory Foam': 'bg-blue-100 text-blue-800 border-blue-200',
+  'Latex': 'bg-green-100 text-green-800 border-green-200',
+  'Hybrid': 'bg-purple-100 text-purple-800 border-purple-200',
+  'Cooling Gel': 'bg-cyan-100 text-cyan-800 border-cyan-200',
+  'Orthopedic': 'bg-orange-100 text-orange-800 border-orange-200',
 };
 
 export default function GalleryManagement() {
@@ -101,7 +101,16 @@ export default function GalleryManagement() {
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
-    category: 'Living Room' as GalleryItem['category'],
+    category: 'Memory Foam' as GalleryItem['category'],
+    image: '',
+    description: '',
+    features: '',
+    isFeatured: false
+  });
+  const [editFormData, setEditFormData] = useState({
+    title: '',
+    slug: '',
+    category: 'Memory Foam' as GalleryItem['category'],
     image: '',
     description: '',
     features: '',
@@ -161,7 +170,7 @@ export default function GalleryManagement() {
     setFormData({
       title: '',
       slug: '',
-      category: 'Living Room',
+      category: 'Memory Foam',
       image: '',
       description: '',
       features: '',
@@ -213,7 +222,58 @@ export default function GalleryManagement() {
 
   const handleEditItem = (item: GalleryItem) => {
     setSelectedItem(item);
+    setEditFormData({
+      title: item.title,
+      slug: item.slug,
+      category: item.category,
+      image: item.image || '',
+      description: item.description,
+      features: item.features?.join(', ') || '',
+      isFeatured: item.isFeatured
+    });
     setEditDialogOpen(true);
+  };
+
+  const handleUpdateItem = async () => {
+    if (!selectedItem || !editFormData.title || !editFormData.slug || !editFormData.description) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      const response = await fetch(`/api/admin/gallery/${selectedItem._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          _type: 'gallery',
+          title: editFormData.title,
+          slug: { _type: 'slug', current: editFormData.slug },
+          category: editFormData.category,
+          image: editFormData.image || undefined,
+          description: editFormData.description,
+          features: editFormData.features ? editFormData.features.split(',').map(f => f.trim()).filter(f => f) : [],
+          isFeatured: editFormData.isFeatured
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Gallery item updated successfully');
+        loadGallery();
+        setEditDialogOpen(false);
+        setSelectedItem(null);
+      } else {
+        const errorMessage = result.error?.message || result.error || 'Failed to update gallery item';
+        toast.error(errorMessage);
+      }
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Failed to update gallery item';
+      toast.error(errorMessage);
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleDeleteItem = (item: GalleryItem) => {
@@ -426,11 +486,11 @@ export default function GalleryManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="Living Room">Living Room</SelectItem>
-                  <SelectItem value="Office">Office</SelectItem>
-                  <SelectItem value="Bedroom">Bedroom</SelectItem>
-                  <SelectItem value="Kitchen">Kitchen</SelectItem>
-                  <SelectItem value="Outdoor">Outdoor</SelectItem>
+                  <SelectItem value="Memory Foam">Memory Foam</SelectItem>
+                  <SelectItem value="Latex">Latex</SelectItem>
+                  <SelectItem value="Hybrid">Hybrid</SelectItem>
+                  <SelectItem value="Cooling Gel">Cooling Gel</SelectItem>
+                  <SelectItem value="Orthopedic">Orthopedic</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -609,21 +669,24 @@ export default function GalleryManagement() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Living Room">Living Room</SelectItem>
-                  <SelectItem value="Office">Office</SelectItem>
-                  <SelectItem value="Bedroom">Bedroom</SelectItem>
-                  <SelectItem value="Kitchen">Kitchen</SelectItem>
-                  <SelectItem value="Outdoor">Outdoor</SelectItem>
+                  <SelectItem value="Memory Foam">Memory Foam</SelectItem>
+                  <SelectItem value="Latex">Latex</SelectItem>
+                  <SelectItem value="Hybrid">Hybrid</SelectItem>
+                  <SelectItem value="Cooling Gel">Cooling Gel</SelectItem>
+                  <SelectItem value="Orthopedic">Orthopedic</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Image URL (optional)</label>
+              <label className="text-sm font-medium">Image URL</label>
               <Input
-                placeholder="https://example.com/image.jpg"
+                placeholder="https://res.cloudinary.com/your-cloud/image/upload/..."
                 value={formData.image}
                 onChange={(e) => setFormData({ ...formData, image: e.target.value })}
               />
+              <p className="text-xs text-gray-500">
+                Enter a Cloudinary CDN URL or any direct image URL
+              </p>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Description *</label>
@@ -663,6 +726,104 @@ export default function GalleryManagement() {
               disabled={isCreating}
             >
               {isCreating ? 'Creating...' : 'Create Gallery Item'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Gallery Item Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Gallery Item</DialogTitle>
+            <DialogDescription>
+              Update the gallery item details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Title *</label>
+              <Input
+                placeholder="Enter gallery item title"
+                value={editFormData.title}
+                onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Slug *</label>
+              <Input
+                placeholder="enter-slug-here"
+                value={editFormData.slug}
+                onChange={(e) => setEditFormData({ ...editFormData, slug: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Category *</label>
+              <Select
+                value={editFormData.category}
+                onValueChange={(value) => setEditFormData({ ...editFormData, category: value as GalleryItem['category'] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Memory Foam">Memory Foam</SelectItem>
+                  <SelectItem value="Latex">Latex</SelectItem>
+                  <SelectItem value="Hybrid">Hybrid</SelectItem>
+                  <SelectItem value="Cooling Gel">Cooling Gel</SelectItem>
+                  <SelectItem value="Orthopedic">Orthopedic</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Image URL</label>
+              <Input
+                placeholder="https://res.cloudinary.com/your-cloud/image/upload/..."
+                value={editFormData.image}
+                onChange={(e) => setEditFormData({ ...editFormData, image: e.target.value })}
+              />
+              <p className="text-xs text-gray-500">
+                Enter a Cloudinary CDN URL or any direct image URL
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description *</label>
+              <Input
+                placeholder="Enter description"
+                value={editFormData.description}
+                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Features (comma-separated)</label>
+              <Input
+                placeholder="Feature 1, Feature 2, Feature 3"
+                value={editFormData.features}
+                onChange={(e) => setEditFormData({ ...editFormData, features: e.target.value })}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="editIsFeatured"
+                checked={editFormData.isFeatured}
+                onChange={(e) => setEditFormData({ ...editFormData, isFeatured: e.target.checked })}
+                className="h-4 w-4"
+              />
+              <label htmlFor="editIsFeatured" className="text-sm font-medium">
+                Mark as Featured
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateItem}
+              disabled={isUpdating}
+            >
+              {isUpdating ? 'Updating...' : 'Update Gallery Item'}
             </Button>
           </DialogFooter>
         </DialogContent>

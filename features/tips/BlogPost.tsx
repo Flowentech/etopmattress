@@ -44,10 +44,10 @@ const BlogPost = ({ blog }: BlogPostProps) => {
     <div className="min-h-screen bg-white">
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Back Button */}
-        <Link href="/tips">
-          <Button variant="outline" className="mb-8 flex items-center gap-2">
+        <Link href="/blog">
+          <Button variant="outline" className="mb-8 flex items-center gap-2 border-primary text-primary hover:bg-primary/5">
             <ArrowLeft className="w-4 h-4" />
-            Back to Tips
+            Back to Blog
           </Button>
         </Link>
 
@@ -59,7 +59,7 @@ const BlogPost = ({ blog }: BlogPostProps) => {
               {blog.categories?.map((category, index) => (
                 <span
                   key={index}
-                  className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium"
+                  className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium"
                 >
                   {category.title}
                 </span>
@@ -130,18 +130,18 @@ const BlogPost = ({ blog }: BlogPostProps) => {
                   <h3 className="text-lg font-semibold text-gray-900">
                     {blog.author.name}
                   </h3>
-                  <p className="text-gray-600">Plant Care Expert</p>
+                  <p className="text-gray-600">Sleep & Mattress Expert</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Back to Tips */}
+        {/* Back to Blog */}
         <div className="text-center mt-12">
-          <Link href="/tips">
-            <Button className="bg-green-600 hover:bg-green-700 text-white">
-              Explore More Tips
+          <Link href="/blog">
+            <Button className="bg-primary hover:bg-primary/90 text-white">
+              Explore More Articles
             </Button>
           </Link>
         </div>

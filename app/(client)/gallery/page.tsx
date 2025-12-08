@@ -1,4 +1,4 @@
-import Gallery from '@/features/gallery'
+import Gallery from '@/components/Gallery'
 import { getAllGalleryItems } from '@/sanity/helpers'
 import { Metadata } from 'next'
 import React from 'react'

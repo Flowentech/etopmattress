@@ -38,7 +38,9 @@ const mainNavigation = [
 
 const contentNavigation = [
   { name: 'Blogs', href: '/admin/blogs', icon: FileText },
+  { name: 'Blog Categories', href: '/admin/blog-categories', icon: Tag },
   { name: 'Gallery', href: '/admin/gallery', icon: ImageIcon },
+  { name: 'Gallery Categories', href: '/admin/gallery-categories', icon: Tag },
 ];
 
 export default function AdminSidebar() {

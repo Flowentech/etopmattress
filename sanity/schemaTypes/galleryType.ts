@@ -29,11 +29,11 @@ export const galleryType = defineType({
       type: "string",
       options: {
         list: [
-          { title: "Living Room", value: "Living Room" },
-          { title: "Office", value: "Office" },
-          { title: "Bedroom", value: "Bedroom" },
-          { title: "Kitchen", value: "Kitchen" },
-          { title: "Outdoor", value: "Outdoor" },
+          { title: "Memory Foam", value: "Memory Foam" },
+          { title: "Latex", value: "Latex" },
+          { title: "Hybrid", value: "Hybrid" },
+          { title: "Cooling Gel", value: "Cooling Gel" },
+          { title: "Orthopedic", value: "Orthopedic" },
         ],
       },
       validation: (rule) => rule.required(),
