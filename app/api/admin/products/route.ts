@@ -294,6 +294,7 @@ export async function PUT(req: NextRequest) {
     const {
       name,
       description,
+      imageUrl,
       price,
       discount,
       stock,
@@ -351,6 +352,17 @@ export async function PUT(req: NextRequest) {
       updateData.navigationcategory = navigationCategories.map((id: string) => ({ _type: 'reference', _ref: id }));
     } else {
       updateData.navigationcategory = [];
+    }
+
+    // Update image if provided
+    if (imageUrl) {
+      updateData.image = {
+        _type: 'image',
+        asset: {
+          _type: 'reference',
+          _ref: imageUrl
+        }
+      };
     }
 
     // Update variants

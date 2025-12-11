@@ -22,8 +22,11 @@ import {
 } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Plus, X } from 'lucide-react';
+import { Loader2, Plus, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface Category {
   _id: string;
@@ -52,6 +55,7 @@ interface Product {
   _id: string;
   name: string;
   description?: string;
+  image?: any;
   price: number;
   discount: number;
   stock: number;
@@ -78,6 +82,7 @@ interface EditProductModalProps {
 
 export default function EditProductModal({ isOpen, onClose, onSuccess, product }: EditProductModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [navigationCategories, setNavigationCategories] = useState<Category[]>([]);
   const [sizes, setSizes] = useState<Size[]>([]);
@@ -87,6 +92,8 @@ export default function EditProductModal({ isOpen, onClose, onSuccess, product }
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    imageUrl: '',
+    imageAssetId: '',
     price: '',
     discount: '0',
     stock: '',
@@ -107,9 +114,14 @@ export default function EditProductModal({ isOpen, onClose, onSuccess, product }
       loadHeights();
 
       // Populate form with product data
+      const imageUrl = product.image?.url || product.image?.asset?.url || '';
+      const imageAssetId = product.image?.asset?._ref || product.image?.asset?._id || '';
+
       setFormData({
         name: product.name || '',
         description: product.description || '',
+        imageUrl: imageUrl,
+        imageAssetId: imageAssetId,
         price: product.price?.toString() || '',
         discount: product.discount?.toString() || '0',
         stock: product.stock?.toString() || '',
@@ -215,12 +227,19 @@ export default function EditProductModal({ isOpen, onClose, onSuccess, product }
 
     setIsSubmitting(true);
     try {
+      // Prepare data to send - use imageAssetId instead of imageUrl
+      const { imageUrl, imageAssetId, ...restFormData } = formData;
+      const dataToSend = {
+        ...restFormData,
+        imageUrl: imageAssetId // Send asset ID as imageUrl (API expects it as imageUrl)
+      };
+
       const response = await fetch(`/api/admin/products?id=${product._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataToSend),
       });
 
       const result = await response.json();
@@ -244,6 +263,8 @@ export default function EditProductModal({ isOpen, onClose, onSuccess, product }
     setFormData({
       name: '',
       description: '',
+      imageUrl: '',
+      imageAssetId: '',
       price: '',
       discount: '0',
       stock: '',
@@ -256,6 +277,75 @@ export default function EditProductModal({ isOpen, onClose, onSuccess, product }
       priceVariants: [],
     });
     onClose();
+  };
+
+  const handleImageUpload = async (file: File) => {
+    const uploadFormData = new FormData();
+    uploadFormData.append('image', file);
+
+    setIsUploading(true);
+    try {
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        // Store both the URL (for display) and asset ID (for saving)
+        setFormData(prev => ({
+          ...prev,
+          imageUrl: result.imageUrl,
+          imageAssetId: result.assetId
+        }));
+        toast.success('Image uploaded successfully');
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (isUploading) return;
+
+    const file = acceptedFiles[0];
+    if (!file) return;
+
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error(`File too large. Maximum size is 10MB`);
+      return;
+    }
+
+    await handleImageUpload(file);
+  }, [isUploading]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.gif']
+    },
+    maxSize: 10 * 1024 * 1024,
+    multiple: false,
+    disabled: isUploading,
+  });
+
+  const removeImage = () => {
+    setFormData(prev => ({
+      ...prev,
+      imageUrl: '',
+      imageAssetId: ''
+    }));
   };
 
   const addPriceVariant = () => {
@@ -324,6 +414,92 @@ export default function EditProductModal({ isOpen, onClose, onSuccess, product }
               placeholder="Enter product name"
               required
             />
+          </div>
+
+          {/* Product Image */}
+          <div className="space-y-2">
+            <Label>Product Image</Label>
+            {formData.imageUrl ? (
+              <Card className="relative overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="relative group">
+                    <div className="aspect-video w-full overflow-hidden rounded-md bg-gray-100">
+                      <img
+                        src={formData.imageUrl}
+                        alt="Product image"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={removeImage}
+                        className="flex items-center gap-2"
+                      >
+                        <X className="h-4 w-4" />
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="p-0">
+                  <div
+                    {...getRootProps()}
+                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                      isDragActive
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                    } ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <input {...getInputProps()} />
+
+                    {isUploading ? (
+                      <div className="space-y-4">
+                        <Loader2 className="h-12 w-12 text-blue-500 mx-auto animate-spin" />
+                        <div>
+                          <p className="text-lg font-medium text-gray-700">Uploading...</p>
+                          <p className="text-sm text-gray-500">Please wait while we upload your image</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center">
+                          <ImageIcon className="w-8 h-8 text-gray-400" />
+                        </div>
+
+                        <div>
+                          <p className="text-lg font-medium text-gray-700">
+                            {isDragActive ? 'Drop your image here' : 'Upload product image'}
+                          </p>
+                          <p className="text-sm text-gray-500 mb-4">
+                            or click to browse from your device
+                          </p>
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="flex items-center gap-2"
+                        >
+                          <Upload className="h-4 w-4" />
+                          Choose File
+                        </Button>
+
+                        <div className="text-xs text-gray-500 space-y-1">
+                          <p>Supported formats: .jpeg, .jpg, .png, .webp, .gif</p>
+                          <p>Maximum size: 10MB</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
