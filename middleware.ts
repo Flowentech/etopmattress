@@ -17,12 +17,12 @@ const isPublicRoute = createRouteMatcher([
 ])
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId } = await auth()
-
   // Protect admin routes
   if (isProtectedRoute(req)) {
     await auth.protect()
   }
+
+  const { userId } = await auth()
 
   // If user is authenticated and not on auth pages, sync user to Sanity
   if (userId && !isPublicRoute(req) && !req.url.includes('/api/')) {
