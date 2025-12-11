@@ -128,6 +128,7 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
     total: 0,
     limit: 20,
@@ -154,17 +155,25 @@ export default function ProductsPage() {
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
 
   useEffect(() => {
+    // Reset to page 1 when filters change
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [statusFilter, searchTerm]);
+
+  useEffect(() => {
     loadProducts();
-  }, [statusFilter, pagination.offset, searchTerm]);
+  }, [statusFilter, currentPage, searchTerm]);
 
   const loadProducts = async () => {
     try {
       setError(null);
       setLoading(true);
 
+      const offset = (currentPage - 1) * pagination.limit;
       const params = new URLSearchParams();
       params.append('limit', pagination.limit.toString());
-      params.append('offset', pagination.offset.toString());
+      params.append('offset', offset.toString());
       if (statusFilter !== 'all') {
         params.append('status', statusFilter);
       }
@@ -304,14 +313,8 @@ export default function ProductsPage() {
     }
   };
 
-  const handleLoadMore = () => {
-    setPagination(prev => ({
-      ...prev,
-      offset: prev.offset + prev.limit
-    }));
-  };
-
   const handleRefresh = () => {
+    setCurrentPage(1);
     setPagination({
       total: 0,
       limit: 20,
@@ -320,6 +323,24 @@ export default function ProductsPage() {
     });
     loadProducts();
   };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const totalPages = Math.ceil(pagination.total / pagination.limit);
 
   if (loading && products.length === 0) {
     return (
@@ -477,6 +498,7 @@ export default function ProductsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-16">#</TableHead>
                   <TableHead>Product</TableHead>
                   <TableHead>Categories</TableHead>
                   <TableHead>Price</TableHead>
@@ -488,8 +510,11 @@ export default function ProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products && products.map((product) => (
+                {products && products.map((product, index) => (
                   <TableRow key={product._id}>
+                    <TableCell className="font-medium text-gray-500">
+                      {(currentPage - 1) * pagination.limit + index + 1}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -627,7 +652,7 @@ export default function ProductsPage() {
                 ) )}
                 {products.length === 0 && !loading && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                       No products found
                     </TableCell>
                   </TableRow>
@@ -636,23 +661,95 @@ export default function ProductsPage() {
             </Table>
           </div>
 
-          {/* Load More */}
-          {pagination.hasMore && (
-            <div className="flex justify-center mt-6">
-              <Button
-                onClick={handleLoadMore}
-                variant="outline"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  'Load More'
-                )}
-              </Button>
+          {/* Pagination */}
+          {pagination.total > 0 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-gray-600">
+                Showing {(currentPage - 1) * pagination.limit + 1} to {Math.min(currentPage * pagination.limit, pagination.total)} of {pagination.total} products
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handlePreviousPage}
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === 1 || loading}
+                >
+                  Previous
+                </Button>
+
+                <div className="flex items-center gap-1">
+                  {(() => {
+                    const pages = [];
+                    const maxPagesToShow = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+                    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+                    if (endPage - startPage < maxPagesToShow - 1) {
+                      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+                    }
+
+                    if (startPage > 1) {
+                      pages.push(
+                        <Button
+                          key={1}
+                          onClick={() => handlePageChange(1)}
+                          variant={currentPage === 1 ? "default" : "outline"}
+                          size="sm"
+                          className="w-10"
+                        >
+                          1
+                        </Button>
+                      );
+                      if (startPage > 2) {
+                        pages.push(<span key="ellipsis1" className="px-2">...</span>);
+                      }
+                    }
+
+                    for (let i = startPage; i <= endPage; i++) {
+                      pages.push(
+                        <Button
+                          key={i}
+                          onClick={() => handlePageChange(i)}
+                          variant={currentPage === i ? "default" : "outline"}
+                          size="sm"
+                          className="w-10"
+                          disabled={loading}
+                        >
+                          {i}
+                        </Button>
+                      );
+                    }
+
+                    if (endPage < totalPages) {
+                      if (endPage < totalPages - 1) {
+                        pages.push(<span key="ellipsis2" className="px-2">...</span>);
+                      }
+                      pages.push(
+                        <Button
+                          key={totalPages}
+                          onClick={() => handlePageChange(totalPages)}
+                          variant={currentPage === totalPages ? "default" : "outline"}
+                          size="sm"
+                          className="w-10"
+                        >
+                          {totalPages}
+                        </Button>
+                      );
+                    }
+
+                    return pages;
+                  })()}
+                </div>
+
+                <Button
+                  onClick={handleNextPage}
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage === totalPages || loading}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
