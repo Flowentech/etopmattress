@@ -3,6 +3,7 @@ import Container from "@/components/Container";
 import ProductGrid from "@/components/ProductGrid";
 import ShopFilters from "@/components/shop/ShopFilters";
 import ShopHeader from "@/components/shop/ShopHeader";
+import MobileFilterButton from "@/components/shop/MobileFilterButton";
 import { getAllProducts } from "@/sanity/helpers";
 import {
   getCategoriesWithCount,
@@ -62,9 +63,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   });
 
   return (
-    <div className="bg-gray-0 pb-16 flex">
-      {/* Left Sidebar - Sticky Filters */}
-      <div className="bg-white shadow-sm border-r border-gray-200 w-64">
+    <div className="bg-gray-0 pb-16 lg:flex">
+      {/* Left Sidebar - Sticky Filters (Hidden on mobile) */}
+      <div className="hidden lg:block bg-white shadow-sm border-r border-gray-200 w-64">
         <div className="sticky top-32 max-h-[calc(100vh-8rem)] overflow-y-auto p-4">
           <Suspense fallback={<div>Loading filters...</div>}>
             <ShopFilters
@@ -86,8 +87,26 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       </div>
 
       {/* Right Content - Products */}
-      <div className="flex-1 min-h-[calc(100vh-16rem)]">
+      <div className="flex-1 min-h-[calc(100vh-16rem)] w-full lg:w-auto">
         <Container className="py-6">
+          {/* Mobile Filter Button */}
+          <div className="mb-4 lg:hidden">
+            <MobileFilterButton
+              categories={categories}
+              priceRanges={priceData.priceRanges}
+              filterStats={filterStats}
+              currentFilters={{
+                category,
+                minPrice,
+                maxPrice,
+                sort,
+                search,
+                availability: availability?.split(","),
+                rating,
+              }}
+            />
+          </div>
+
           {/* Shop Header */}
           <ShopHeader
             totalProducts={filteredProducts.length}
@@ -110,7 +129,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                   {Array.from({ length: 12 }).map((_, i) => (
                     <div
                       key={i}
-                      className="bg-white rounded-lg shadow-sm animate-pulse w-[300px] h-[200px] flex mx-auto"
+                      className="bg-white rounded-lg shadow-sm animate-pulse w-full max-w-[300px] h-[200px] flex mx-auto"
                     >
                       <div className="w-1/2 bg-gray-200 rounded-l-lg"></div>
                       <div className="w-1/2 p-3 flex flex-col justify-between">

@@ -3,7 +3,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
 
-const Navigation = () => {
+interface NavigationProps {
+  onLinkClick?: () => void;
+}
+
+const Navigation = ({ onLinkClick }: NavigationProps) => {
   const pathname = usePathname();
 
   const navLinks = [
@@ -16,8 +20,14 @@ const Navigation = () => {
     { label: "Contact", href: "/contact" }
   ];
 
+  const handleClick = () => {
+    if (onLinkClick) {
+      onLinkClick();
+    }
+  };
+
   return (
-    <nav className="flex flex-col md:flex-row md:space-x-5 space-y-2 md:space-y-0 text-xs">
+    <nav className="flex flex-col md:flex-row md:space-x-5 space-y-2 md:space-y-0 text-xs pointer-events-auto">
       {navLinks.map((link) => {
         const isActive = pathname === link.href;
 
@@ -25,7 +35,8 @@ const Navigation = () => {
           <Link
             key={link.href}
             href={link.href}
-            className={`pb-1 transition-all border-b-2 ${
+            onClick={handleClick}
+            className={`pb-1 transition-all border-b-2 relative z-20 cursor-pointer pointer-events-auto inline-block ${
               isActive
                 ? "text-primary border-primary font-medium"
                 : "border-transparent text-gray-600 hover:text-primary hover:border-primary"

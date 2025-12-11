@@ -26,7 +26,7 @@ const HeaderContent: React.FC<HeaderContentProps> = ({ user }) => {
   return (
     <>
       {/* Header */}
-      <div className="bg-white sticky -top-1 z-50 shadow-sm border-b border-gray-100">
+      <div className="bg-white sticky top-0 z-50 shadow-sm border-b border-gray-100">
         <Container>
           <header className="flex items-center justify-between py-2 h-16">
             {/* Left Side - Mobile Menu, Logo & Interio AI */}
@@ -81,8 +81,8 @@ const HeaderContent: React.FC<HeaderContentProps> = ({ user }) => {
           </header>
 
           {/* Navigation (desktop) */}
-          <div className="hidden lg:block border-t border-gray-100 h-10">
-            <div className="flex justify-center items-center h-full">
+          <div className="hidden lg:block border-t border-gray-100 py-2 relative z-10">
+            <div className="flex justify-center items-center pointer-events-auto">
               <Navigation />
             </div>
           </div>
@@ -91,7 +91,7 @@ const HeaderContent: React.FC<HeaderContentProps> = ({ user }) => {
 
       {/* Mobile Sidebar */}
       {isSidebarOpen && (
-        <div className="fixed inset-0 z-50 flex">
+        <div className="fixed inset-0 z-[60] flex">
           {/* Sidebar panel */}
           <div className="bg-white w-64 h-full shadow-lg p-4">
             <div className="flex justify-between items-center mb-4">
@@ -100,7 +100,7 @@ const HeaderContent: React.FC<HeaderContentProps> = ({ user }) => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <Navigation />
+            <Navigation onLinkClick={toggleSidebar} />
 
             {/* Mobile Search */}
             <div className="lg:hidden mb-4">
