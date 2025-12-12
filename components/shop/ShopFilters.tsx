@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -12,6 +12,8 @@ interface CategoryTree extends CategoryWithCount {
   parent?: { _id: string; title: string };
   children?: CategoryTree[];
 }
+
+const MAX_CATEGORY_DEPTH = 5; // Prevent infinite recursion
 
 interface ShopFiltersProps {
   categories: CategoryWithCount[];
@@ -37,32 +39,44 @@ export default function ShopFilters({ categories, priceRanges, currentFilters }:
     Number(currentFilters.minPrice) || 0,
     Number(currentFilters.maxPrice) || 500
   ]);
-  const [categoryTree, setCategoryTree] = useState<CategoryTree[]>([]);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
-  // Build category tree on mount
-  useEffect(() => {
-    const tree = buildCategoryTree(categories as any[]);
-    setCategoryTree(tree);
-  }, [categories]);
-
-  const buildCategoryTree = (cats: any[]): CategoryTree[] => {
+  // Memoize category tree with safeguards against circular references
+  const categoryTree = useMemo(() => {
     const categoryMap = new Map<string, CategoryTree>();
     const rootCategories: CategoryTree[] = [];
 
     // Initialize all categories
-    cats.forEach((cat) => {
+    (categories as any[]).forEach((cat) => {
       categoryMap.set(cat._id, { ...cat, children: [] });
     });
 
-    // Build tree structure
-    cats.forEach((cat) => {
+    // Build tree structure with circular reference detection
+    (categories as any[]).forEach((cat) => {
       const category = categoryMap.get(cat._id)!;
       if (cat.parent?._id) {
-        const parent = categoryMap.get(cat.parent._id);
-        if (parent) {
-          parent.children = parent.children || [];
-          parent.children.push(category);
+        // Check for circular reference
+        const checkCircular = (parentId: string, visitPath: Set<string> = new Set()): boolean => {
+          if (visitPath.has(parentId)) return true;
+          visitPath.add(parentId);
+          const parent = categoryMap.get(parentId);
+          if (parent?.parent?._id) {
+            return checkCircular(parent.parent._id, visitPath);
+          }
+          return false;
+        };
+
+        if (!checkCircular(cat.parent._id)) {
+          const parent = categoryMap.get(cat.parent._id);
+          if (parent && parent._id !== cat._id) {
+            parent.children = parent.children || [];
+            parent.children.push(category);
+          } else {
+            rootCategories.push(category);
+          }
+        } else {
+          // Circular reference detected, add to root
+          rootCategories.push(category);
         }
       } else {
         rootCategories.push(category);
@@ -70,7 +84,7 @@ export default function ShopFilters({ categories, priceRanges, currentFilters }:
     });
 
     return rootCategories.sort((a, b) => (a.order || 0) - (b.order || 0));
-  };
+  }, [categories]);
 
   // Update slider when filters change
   useEffect(() => {
@@ -80,7 +94,7 @@ export default function ShopFilters({ categories, priceRanges, currentFilters }:
     ]);
   }, [currentFilters.minPrice, currentFilters.maxPrice]);
 
-  const updateFilter = (key: string, value: string) => {
+  const updateFilter = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams);
 
     if (value && value !== "all") {
@@ -91,9 +105,9 @@ export default function ShopFilters({ categories, priceRanges, currentFilters }:
 
     params.delete("page"); // Reset to page 1 when filtering
     router.push(`/shop?${params.toString()}`);
-  };
+  }, [searchParams, router]);
 
-  const handlePriceRangeClick = (range: PriceRange) => {
+  const handlePriceRangeClick = useCallback((range: PriceRange) => {
     const minVal = range.min.toString();
     const maxVal = range.max?.toString() || "";
 
@@ -110,19 +124,33 @@ export default function ShopFilters({ categories, priceRanges, currentFilters }:
 
     params.delete("page");
     router.push(`/shop?${params.toString()}`);
-  };
+  }, [searchParams, router]);
 
-  const toggleExpand = (categoryId: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
-    } else {
-      newExpanded.add(categoryId);
+  const toggleExpand = useCallback((categoryId: string) => {
+    setExpandedCategories((prev) => {
+      const newExpanded = new Set(prev);
+      if (newExpanded.has(categoryId)) {
+        newExpanded.delete(categoryId);
+      } else {
+        newExpanded.add(categoryId);
+      }
+      return newExpanded;
+    });
+  }, []);
+
+  const renderCategoryTree = useCallback((
+    category: CategoryTree,
+    depth: number = 0,
+    visited: Set<string> = new Set()
+  ) => {
+    // Prevent infinite recursion with depth limit and visited tracking
+    if (depth >= MAX_CATEGORY_DEPTH || visited.has(category._id)) {
+      return null;
     }
-    setExpandedCategories(newExpanded);
-  };
 
-  const renderCategoryTree = (category: CategoryTree, depth: number = 0) => {
+    const newVisited = new Set(visited);
+    newVisited.add(category._id);
+
     const hasChildren = category.children && category.children.length > 0;
     const isSelected = currentFilters.category === category._id;
     const isExpanded = expandedCategories.has(category._id);
@@ -163,14 +191,14 @@ export default function ShopFilters({ categories, priceRanges, currentFilters }:
           </button>
         </div>
 
-        {hasChildren && isExpanded && (
+        {hasChildren && isExpanded && depth < MAX_CATEGORY_DEPTH - 1 && (
           <div className="space-y-1">
-            {category.children?.map((child) => renderCategoryTree(child, depth + 1))}
+            {category.children?.map((child) => renderCategoryTree(child, depth + 1, newVisited))}
           </div>
         )}
       </div>
     );
-  };
+  }, [currentFilters.category, expandedCategories, toggleExpand, updateFilter]);
 
   return (
     <div className="">

@@ -223,7 +223,17 @@ export const getFeaturedProducts = async () => {
 };
 
 export const getNewArrivals = async () => {
-  return await getProductsByNavigationCategory('new-arrivals');
+  const NEW_ARRIVALS_QUERY = defineQuery(
+    `*[_type == 'product' && level == 'new'] | order(_createdAt desc)`
+  );
+  
+  try {
+    const products = await client.fetch(NEW_ARRIVALS_QUERY);
+    return products || [];
+  } catch (error) {
+    console.error("Error fetching new arrivals:", error);
+    return [];
+  }
 };
 
 export const getAllContactMessages = async () => {

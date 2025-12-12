@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Form from "next/form";
@@ -23,20 +23,23 @@ export default function ShopHeader({ totalProducts, currentFilters }: ShopHeader
   const searchParams = useSearchParams();
   const [sortBy, setSortBy] = useState(currentFilters.sort || "newest");
 
-  const handleSortChange = (newSort: string) => {
+  const handleSortChange = useCallback((newSort: string) => {
     setSortBy(newSort);
     const params = new URLSearchParams(searchParams);
     params.set("sort", newSort);
     params.delete("page"); // Reset to page 1 when sorting
     router.push(`/shop?${params.toString()}`);
-  };
+  }, [searchParams, router]);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     router.push("/shop");
-  };
+  }, [router]);
 
-  const hasFilters = currentFilters.category || currentFilters.minPrice || 
-                   currentFilters.maxPrice || currentFilters.search;
+  const hasFilters = useMemo(() =>
+    currentFilters.category || currentFilters.minPrice ||
+    currentFilters.maxPrice || currentFilters.search,
+    [currentFilters.category, currentFilters.minPrice, currentFilters.maxPrice, currentFilters.search]
+  );
 
   return (
     <div className="space-y-4">

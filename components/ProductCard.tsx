@@ -1,14 +1,14 @@
 import { Product } from "@/sanity.types";
 import { urlFor } from "@/sanity/lib/image";
 import Image from "next/image";
-import React from "react";
+import React, { memo } from "react";
 import { LuStar } from "react-icons/lu";
 import PriceView from "./PriceView";
 import Link from "next/link";
 import AddToCartButton from "./AddToCartButton";
 import WishlistButton from "./WishlistButton";
 
-const ProductCard = ({ product }: { product: Product }) => {
+const ProductCard = memo(({ product }: { product: Product }) => {
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden group text-xs w-[300px] h-[200px] flex">
       <div className="w-1/2 border-r border-gray-300 overflow-hidden relative">
@@ -70,6 +70,8 @@ const ProductCard = ({ product }: { product: Product }) => {
       </div>
     </div>
   );
-};
+});
+
+ProductCard.displayName = "ProductCard";
 
 export default ProductCard;
