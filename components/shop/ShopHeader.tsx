@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useTransition, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Form from "next/form";
@@ -21,18 +21,39 @@ interface ShopHeaderProps {
 export default function ShopHeader({ totalProducts, currentFilters }: ShopHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const navigationRef = useRef(false);
   const [sortBy, setSortBy] = useState(currentFilters.sort || "newest");
 
   const handleSortChange = useCallback((newSort: string) => {
+    if (navigationRef.current) return;
+
+    navigationRef.current = true;
     setSortBy(newSort);
+
     const params = new URLSearchParams(searchParams);
     params.set("sort", newSort);
     params.delete("page"); // Reset to page 1 when sorting
-    router.push(`/shop?${params.toString()}`);
+
+    startTransition(() => {
+      router.push(`/shop?${params.toString()}`);
+      setTimeout(() => {
+        navigationRef.current = false;
+      }, 100);
+    });
   }, [searchParams, router]);
 
   const clearFilters = useCallback(() => {
-    router.push("/shop");
+    if (navigationRef.current) return;
+
+    navigationRef.current = true;
+
+    startTransition(() => {
+      router.push("/shop");
+      setTimeout(() => {
+        navigationRef.current = false;
+      }, 100);
+    });
   }, [router]);
 
   const hasFilters = useMemo(() =>

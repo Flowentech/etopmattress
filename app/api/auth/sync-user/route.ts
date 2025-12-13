@@ -2,10 +2,6 @@ import { currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { syncUserToSanity } from '@/lib/clerk/syncUser';
 
-/**
- * API endpoint to sync current user to Sanity
- * Called after successful sign-in/sign-up
- */
 export async function POST() {
   try {
     const user = await currentUser();
@@ -17,23 +13,13 @@ export async function POST() {
       );
     }
 
-    // Sync user to Sanity
     const sanityUser = await syncUserToSanity(user);
 
-    if (sanityUser) {
-      return NextResponse.json({
-        success: true,
-        message: 'User synced successfully',
-        userId: sanityUser._id,
-      });
-    } else {
-      // User sync failed, but don't break the flow
-      console.warn('User sync failed for:', user.id);
-      return NextResponse.json({
-        success: false,
-        message: 'User sync failed, but authentication successful',
-      });
-    }
+    return NextResponse.json({
+      success: !!sanityUser,
+      message: sanityUser ? 'User synced successfully' : 'User sync failed',
+      userId: sanityUser?._id,
+    });
   } catch (error) {
     console.error('Error in sync-user endpoint:', error);
     return NextResponse.json(
@@ -43,9 +29,6 @@ export async function POST() {
   }
 }
 
-/**
- * GET endpoint to check if user exists in Sanity
- */
 export async function GET() {
   try {
     const user = await currentUser();

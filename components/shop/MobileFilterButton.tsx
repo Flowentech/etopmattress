@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -36,6 +37,13 @@ export default function MobileFilterButton({
   currentFilters,
 }: MobileFilterButtonProps) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Close sheet when search params change (filter applied)
+  useEffect(() => {
+    setOpen(false);
+  }, [searchParams]);
 
   return (
     <div className="lg:hidden">

@@ -29,6 +29,7 @@ export default function InfiniteProductGrid({
   const [hasMore, setHasMore] = useState(initialProducts.length < totalProducts);
   const [isLoading, setIsLoading] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const loadingRef = useRef(false);
 
   // Reset products when filters change
   useEffect(() => {
@@ -38,9 +39,11 @@ export default function InfiniteProductGrid({
   }, [initialProducts, totalProducts]);
 
   const loadMore = useCallback(async () => {
-    if (isLoading || !hasMore) return;
+    if (loadingRef.current || !hasMore) return;
 
+    loadingRef.current = true;
     setIsLoading(true);
+
     try {
       const params = new URLSearchParams({
         page: (page + 1).toString(),
@@ -54,6 +57,11 @@ export default function InfiniteProductGrid({
       });
 
       const response = await fetch(`/api/products?${params.toString()}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+
       const data = await response.json();
 
       if (data.products && data.products.length > 0) {
@@ -67,15 +75,16 @@ export default function InfiniteProductGrid({
       console.error("Error loading more products:", error);
       setHasMore(false);
     } finally {
+      loadingRef.current = false;
       setIsLoading(false);
     }
-  }, [page, hasMore, isLoading, filters]);
+  }, [page, hasMore, filters]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
+        if (entries[0].isIntersecting && hasMore && !loadingRef.current) {
           loadMore();
         }
       },
@@ -92,7 +101,7 @@ export default function InfiniteProductGrid({
         observer.unobserve(currentTarget);
       }
     };
-  }, [hasMore, isLoading, loadMore]);
+  }, [hasMore, loadMore]);
 
   if (products.length === 0) {
     return (

@@ -5,7 +5,23 @@ import { backendClient } from "../lib/backendClient";
 import { client } from "../lib/client";
 
 export const getAllProducts = async () => {
-  const PRODUCTS_QUERY = defineQuery(`*[_type=="product"] | order(name asc)`);
+  const PRODUCTS_QUERY = defineQuery(`*[_type=="product"] {
+    _id,
+    _createdAt,
+    name,
+    slug,
+    image,
+    price,
+    discount,
+    label,
+    stock,
+    status,
+    categories[]-> {
+      _id,
+      title,
+      slug
+    }
+  } | order(name asc)`);
   try {
     const products = await client.fetch(PRODUCTS_QUERY);
     return products || [];
@@ -215,16 +231,36 @@ export const getTrendingProducts = async () => {
 };
 
 export const getBestSellerProducts = async () => {
-  return await getProductsByNavigationCategory('bestseller');
+  const BEST_SELLER_QUERY = defineQuery(
+    `*[_type == 'product' && status == 'sale'] | order(_createdAt desc)`
+  );
+  
+  try {
+    const products = await client.fetch(BEST_SELLER_QUERY);
+    return products || [];
+  } catch (error) {
+    console.error("Error fetching best seller products:", error);
+    return [];
+  }
 };
 
 export const getFeaturedProducts = async () => {
-  return await getProductsByNavigationCategory('featured');
+  const FEATURED_QUERY = defineQuery(
+    `*[_type == 'product' && status == 'hot'] | order(_createdAt desc)`
+  );
+  
+  try {
+    const products = await client.fetch(FEATURED_QUERY);
+    return products || [];
+  } catch (error) {
+    console.error("Error fetching featured products:", error);
+    return [];
+  }
 };
 
 export const getNewArrivals = async () => {
   const NEW_ARRIVALS_QUERY = defineQuery(
-    `*[_type == 'product' && level == 'new'] | order(_createdAt desc)`
+    `*[_type == 'product' && status == 'new'] | order(_createdAt desc)`
   );
   
   try {

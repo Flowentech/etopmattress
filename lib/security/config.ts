@@ -60,7 +60,7 @@ export const SECURITY_HEADERS = {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https: https://*.sanity.io https://*.clerk.accounts.dev https://*.clerk.com https://img.clerk.com https://*.googleusercontent.com https://images.unsplash.com https://www.google-analytics.com https://www.googletagmanager.com",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' https://api.stripe.com https://*.sanity.io https://resend.com https://*.clerk.accounts.dev https://*.clerk.com https://img.clerk.com https://accurate-wahoo-38.clerk.accounts.dev https://*.googleusercontent.com https://optimal-spaniel-71.clerk.accounts.dev https://www.google-analytics.com https://www.googletagmanager.com https://analytics.google.com ws://localhost:* http://localhost:*",
+    "connect-src 'self' https://api.stripe.com https://*.sanity.io https://resend.com https://*.clerk.accounts.dev https://*.clerk.com https://img.clerk.com https://accurate-wahoo-38.clerk.accounts.dev https://*.googleusercontent.com https://optimal-spaniel-71.clerk.accounts.dev https://www.google-analytics.com https://www.googletagmanager.com https://analytics.google.com https://clerk-telemetry.com ws://localhost:* http://localhost:*",
     "frame-src 'self' https://js.stripe.com https://checkout.stripe.com",
     "worker-src 'self' blob:",
     "object-src 'none'",

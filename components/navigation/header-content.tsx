@@ -38,7 +38,7 @@ const HeaderContent: React.FC<HeaderContentProps> = ({ user }) => {
               
               {/* Logo */}
               <Link href="/" className="flex items-center">
-                <Image src={logo} alt="logo" className="w-16 lg:w-20 h-auto" priority />
+                <Image src={logo} alt="logo" className="w-16 lg:w-16 h-auto" priority />
               </Link>
             </div>
 

@@ -13,7 +13,7 @@ const Categories = ({ categories }: Props) => {
       <div className="flex items-center justify-between mb-8">
         <div className="text-left">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Shop by <span className="text-emerald-600">Category</span>
+            Shop by <span className="text-primary">Category</span>
           </h2>
           <p className="text-gray-600 max-w-2xl">
             Explore our carefully curated collection of plants and interior design products

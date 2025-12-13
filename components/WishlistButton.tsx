@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "./ui/button";
 import { useUser } from "@clerk/nextjs";
@@ -20,29 +20,9 @@ const WishlistButton: React.FC<WishlistButtonProps> = ({
   size = "md",
 }) => {
   const { user } = useUser();
-  const { toggleItem, isWishlisted: isGuestWishlisted, syncWithServer } = useWishlistStore();
+  const { toggleItem, isWishlisted: isGuestWishlisted } = useWishlistStore();
   const [isServerWishlisted, setIsServerWishlisted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Check if product is in wishlist on mount
-  useEffect(() => {
-    const checkWishlistStatus = async () => {
-      try {
-        const response = await fetch(`/api/wishlist/check?productId=${product._id}`);
-        const data = await response.json();
-        setIsServerWishlisted(data.isWishlisted);
-      } catch (error) {
-        console.error("Error checking wishlist status:", error);
-      }
-    };
-
-    if (user) {
-      checkWishlistStatus();
-      // Sync guest wishlist with server when user logs in
-      syncWithServer(user.id);
-    }
-  }, [user, product._id, syncWithServer]);
-
 
   const isWishlisted = user ? isServerWishlisted : isGuestWishlisted(product._id);
 
@@ -51,7 +31,6 @@ const WishlistButton: React.FC<WishlistButtonProps> = ({
     
     try {
       if (user) {
-        // Logged-in user: Use server API
         const response = await fetch("/api/wishlist/toggle", {
           method: "POST",
           headers: {
@@ -73,7 +52,6 @@ const WishlistButton: React.FC<WishlistButtonProps> = ({
           toast.error(data.message || "Something went wrong");
         }
       } else {
-        // Guest user: Use local storage
         const wasAdded = toggleItem(product);
         toast.success(
           wasAdded

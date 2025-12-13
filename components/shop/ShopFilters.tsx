@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useTransition, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -33,6 +33,9 @@ interface ShopFiltersProps {
 export default function ShopFilters({ categories, priceRanges, currentFilters }: ShopFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const navigationRef = useRef(false);
+
   const [minPrice, setMinPrice] = useState(currentFilters.minPrice || "");
   const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice || "");
   const [priceRange, setPriceRange] = useState([
@@ -95,6 +98,10 @@ export default function ShopFilters({ categories, priceRanges, currentFilters }:
   }, [currentFilters.minPrice, currentFilters.maxPrice]);
 
   const updateFilter = useCallback((key: string, value: string) => {
+    if (navigationRef.current) return; // Prevent multiple simultaneous navigations
+
+    navigationRef.current = true;
+
     const params = new URLSearchParams(searchParams);
 
     if (value && value !== "all") {
@@ -104,15 +111,27 @@ export default function ShopFilters({ categories, priceRanges, currentFilters }:
     }
 
     params.delete("page"); // Reset to page 1 when filtering
-    router.push(`/shop?${params.toString()}`);
+
+    startTransition(() => {
+      router.push(`/shop?${params.toString()}`);
+      setTimeout(() => {
+        navigationRef.current = false;
+      }, 100);
+    });
   }, [searchParams, router]);
 
   const handlePriceRangeClick = useCallback((range: PriceRange) => {
+    if (navigationRef.current) return;
+
+    navigationRef.current = true;
+
     const minVal = range.min.toString();
     const maxVal = range.max?.toString() || "";
 
     setMinPrice(minVal);
     setMaxPrice(maxVal);
+    setPriceRange([range.min, range.max || 500]);
+
     const params = new URLSearchParams(searchParams);
 
     params.set("minPrice", minVal);
@@ -123,7 +142,13 @@ export default function ShopFilters({ categories, priceRanges, currentFilters }:
     }
 
     params.delete("page");
-    router.push(`/shop?${params.toString()}`);
+
+    startTransition(() => {
+      router.push(`/shop?${params.toString()}`);
+      setTimeout(() => {
+        navigationRef.current = false;
+      }, 100);
+    });
   }, [searchParams, router]);
 
   const toggleExpand = useCallback((categoryId: string) => {
@@ -258,6 +283,10 @@ export default function ShopFilters({ categories, priceRanges, currentFilters }:
                     setMaxPrice(values[1].toString());
                   }}
                   onValueCommit={(values) => {
+                    if (navigationRef.current) return;
+
+                    navigationRef.current = true;
+
                     const params = new URLSearchParams(searchParams);
                     if (values[0] > 0) {
                       params.set("minPrice", values[0].toString());
@@ -270,7 +299,13 @@ export default function ShopFilters({ categories, priceRanges, currentFilters }:
                       params.delete("maxPrice");
                     }
                     params.delete("page");
-                    router.push(`/shop?${params.toString()}`);
+
+                    startTransition(() => {
+                      router.push(`/shop?${params.toString()}`);
+                      setTimeout(() => {
+                        navigationRef.current = false;
+                      }, 100);
+                    });
                   }}
                   max={500}
                   min={0}

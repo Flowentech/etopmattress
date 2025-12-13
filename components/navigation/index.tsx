@@ -21,9 +21,7 @@ const Navigation = ({ onLinkClick }: NavigationProps) => {
   ];
 
   const handleClick = () => {
-    if (onLinkClick) {
-      onLinkClick();
-    }
+    onLinkClick?.();
   };
 
   return (

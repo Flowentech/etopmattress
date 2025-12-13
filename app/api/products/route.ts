@@ -19,8 +19,28 @@ export async function GET(request: NextRequest) {
     // Fetch all products
     const allProducts = await getAllProducts();
 
+    // Clean products to avoid circular references and ensure serializability
+    const cleanedProducts = allProducts.map((product: any) => ({
+      _id: product._id,
+      _createdAt: product._createdAt,
+      name: product.name,
+      slug: product.slug,
+      image: product.image,
+      price: product.price,
+      discount: product.discount,
+      label: product.label,
+      stock: product.stock,
+      status: product.status,
+      description: product.description,
+      categories: product.categories?.map((cat: any) => ({
+        _id: cat._id,
+        title: cat.title,
+        slug: cat.slug,
+      })) || [],
+    }));
+
     // Apply filters
-    const filteredProducts = filterProducts(allProducts, {
+    const filteredProducts = filterProducts(cleanedProducts, {
       category,
       minPrice,
       maxPrice,
