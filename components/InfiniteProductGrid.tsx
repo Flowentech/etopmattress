@@ -1,7 +1,7 @@
 "use client";
 
 import { Product } from "@/sanity.types";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import ProductCard from "./ProductCard";
 import { motion } from "framer-motion";
 
@@ -30,13 +30,22 @@ export default function InfiniteProductGrid({
   const [isLoading, setIsLoading] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
+  const prevFiltersRef = useRef<string>("");
 
-  // Reset products when filters change
+  // Create a stable filter key to detect actual changes
+  const filterKey = useMemo(() => {
+    return JSON.stringify(filters);
+  }, [filters]);
+
+  // Reset products when filters actually change
   useEffect(() => {
-    setProducts(initialProducts);
-    setPage(1);
-    setHasMore(initialProducts.length < totalProducts);
-  }, [initialProducts, totalProducts]);
+    if (prevFiltersRef.current !== filterKey) {
+      prevFiltersRef.current = filterKey;
+      setProducts(initialProducts);
+      setPage(1);
+      setHasMore(initialProducts.length < totalProducts);
+    }
+  }, [filterKey, initialProducts, totalProducts]);
 
   const loadMore = useCallback(async () => {
     if (loadingRef.current || !hasMore) return;
