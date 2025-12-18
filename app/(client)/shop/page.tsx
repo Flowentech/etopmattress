@@ -4,11 +4,17 @@ import { useState, useEffect } from "react";
 import Container from "@/components/Container";
 import ProductGrid from "@/components/ProductGrid";
 import { Product } from "@/sanity.types";
+import { ChevronDown, ChevronRight, Filter } from "lucide-react";
 
 interface Category {
   _id: string;
   title: string;
   slug: { current: string };
+  level: number;
+  order: number;
+  parent?: { _id: string; title: string; slug: { current: string } };
+  children?: Category[];
+  productCount?: number;
 }
 
 export default function ShopPage() {
@@ -16,6 +22,7 @@ export default function ShopPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   useEffect(() => {
@@ -30,10 +37,46 @@ export default function ShopPage() {
     try {
       const response = await fetch("/api/categories");
       const data = await response.json();
-      setCategories(data);
+      setCategories(buildCategoryTree(data));
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
+  };
+
+  const buildCategoryTree = (cats: Category[]): Category[] => {
+    const categoryMap = new Map<string, Category>();
+    const rootCategories: Category[] = [];
+
+    // Initialize all categories
+    cats.forEach((cat) => {
+      categoryMap.set(cat._id, { ...cat, children: [] });
+    });
+
+    // Build tree structure
+    cats.forEach((cat) => {
+      const category = categoryMap.get(cat._id)!;
+      if (cat.parent?._id) {
+        const parent = categoryMap.get(cat.parent._id);
+        if (parent) {
+          parent.children = parent.children || [];
+          parent.children.push(category);
+        }
+      } else {
+        rootCategories.push(category);
+      }
+    });
+
+    // Sort by order
+    const sortByOrder = (a: Category, b: Category) => (a.order || 0) - (b.order || 0);
+    rootCategories.sort(sortByOrder);
+    rootCategories.forEach((cat) => {
+      if (cat.children) cat.children.sort(sortByOrder);
+      cat.children?.forEach((subCat) => {
+        if (subCat.children) subCat.children.sort(sortByOrder);
+      });
+    });
+
+    return rootCategories;
   };
 
   const fetchProducts = async () => {
@@ -59,6 +102,90 @@ export default function ShopPage() {
     setIsMobileFilterOpen(false);
   };
 
+  const toggleExpand = (categoryId: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
+  const getSelectedCategoryName = () => {
+    if (selectedCategory === "all") return "All Products";
+
+    const findCategory = (cats: Category[]): string | null => {
+      for (const cat of cats) {
+        if (cat._id === selectedCategory) return cat.title;
+        if (cat.children) {
+          const found = findCategory(cat.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    return findCategory(categories) || "Filter";
+  };
+
+  const renderCategoryItem = (category: Category, depth: number = 0) => {
+    const hasChildren = category.children && category.children.length > 0;
+    const isExpanded = expandedCategories.has(category._id);
+    const isSelected = selectedCategory === category._id;
+    const paddingLeft = depth * 16;
+
+    return (
+      <div key={category._id}>
+        <button
+          onClick={() => {
+            if (hasChildren) {
+              toggleExpand(category._id);
+            }
+            handleCategoryChange(category._id);
+          }}
+          className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors ${
+            isSelected
+              ? "bg-primary text-white"
+              : "text-gray-700 hover:bg-gray-100"
+          }`}
+          style={{ paddingLeft: `${paddingLeft + 16}px` }}
+        >
+          <span className="flex items-center gap-2 flex-1">
+            {hasChildren && (
+              <span
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleExpand(category._id);
+                }}
+                className="cursor-pointer"
+              >
+                {isExpanded ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </span>
+            )}
+            {!hasChildren && <span className="w-4" />}
+            <span className="font-medium">{category.title}</span>
+          </span>
+          {category.productCount !== undefined && (
+            <span className={`text-xs ${isSelected ? "text-white" : "text-gray-500"}`}>
+              ({category.productCount})
+            </span>
+          )}
+        </button>
+
+        {hasChildren && isExpanded && (
+          <div className="bg-gray-50">
+            {category.children?.map((child) => renderCategoryItem(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Container className="py-8">
@@ -70,33 +197,26 @@ export default function ShopPage() {
 
         <div className="flex gap-8">
           {/* Desktop Sidebar Filter */}
-          <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Categories</h2>
-              <div className="space-y-2">
+          <aside className="hidden lg:block w-80 flex-shrink-0">
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden sticky top-4">
+              <div className="p-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Filter className="w-5 h-5" />
+                  Categories
+                </h2>
+              </div>
+              <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
                 <button
                   onClick={() => handleCategoryChange("all")}
-                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                  className={`w-full text-left px-4 py-2.5 font-medium transition-colors ${
                     selectedCategory === "all"
                       ? "bg-primary text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
                   All Products
                 </button>
-                {categories.map((category) => (
-                  <button
-                    key={category._id}
-                    onClick={() => handleCategoryChange(category._id)}
-                    className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                      selectedCategory === category._id
-                        ? "bg-primary text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    {category.title}
-                  </button>
-                ))}
+                {categories.map((category) => renderCategoryItem(category))}
               </div>
             </div>
           </aside>
@@ -109,29 +229,23 @@ export default function ShopPage() {
                 onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
                 className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 flex items-center justify-between shadow-sm"
               >
-                <span className="font-medium text-gray-900">
-                  {selectedCategory === "all"
-                    ? "All Products"
-                    : categories.find((cat) => cat._id === selectedCategory)?.title || "Filter"}
+                <span className="font-medium text-gray-900 flex items-center gap-2">
+                  <Filter className="w-5 h-5" />
+                  {getSelectedCategoryName()}
                 </span>
-                <svg
+                <ChevronDown
                   className={`w-5 h-5 text-gray-500 transition-transform ${
                     isMobileFilterOpen ? "rotate-180" : ""
                   }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                />
               </button>
 
               {/* Mobile Filter Dropdown */}
               {isMobileFilterOpen && (
-                <div className="mt-2 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
+                <div className="mt-2 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden max-h-[60vh] overflow-y-auto">
                   <button
                     onClick={() => handleCategoryChange("all")}
-                    className={`w-full text-left px-4 py-3 border-b border-gray-200 ${
+                    className={`w-full text-left px-4 py-3 border-b border-gray-200 font-medium ${
                       selectedCategory === "all"
                         ? "bg-primary text-white"
                         : "bg-white text-gray-700 hover:bg-gray-50"
@@ -140,17 +254,9 @@ export default function ShopPage() {
                     All Products
                   </button>
                   {categories.map((category) => (
-                    <button
-                      key={category._id}
-                      onClick={() => handleCategoryChange(category._id)}
-                      className={`w-full text-left px-4 py-3 border-b border-gray-200 last:border-b-0 ${
-                        selectedCategory === category._id
-                          ? "bg-primary text-white"
-                          : "bg-white text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      {category.title}
-                    </button>
+                    <div key={category._id} className="border-b border-gray-200 last:border-b-0">
+                      {renderCategoryItem(category)}
+                    </div>
                   ))}
                 </div>
               )}
