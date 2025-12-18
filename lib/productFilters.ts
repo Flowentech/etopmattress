@@ -13,59 +13,47 @@ interface FilterParams {
 export function filterProducts(products: Product[], filters: FilterParams): Product[] {
   let filteredProducts = [...products];
 
-  // Category filter
+  // Category filter - check both _ref and _id
   if (filters.category && filters.category !== "all") {
-    filteredProducts = filteredProducts.filter(product => 
-      product.categories?.some((cat: { _ref?: string; _id?: string }) => cat._ref === filters.category || cat._id === filters.category)
+    filteredProducts = filteredProducts.filter(product =>
+      product.categories?.some(cat => {
+        const catId = typeof cat === 'object' && '_ref' in cat ? cat._ref : (cat as any)._id;
+        return catId === filters.category;
+      })
     );
   }
 
   // Price range filter
   if (filters.minPrice || filters.maxPrice) {
-    const min = filters.minPrice ? parseFloat(filters.minPrice) : 0;
-    const max = filters.maxPrice ? parseFloat(filters.maxPrice) : Infinity;
-    
-    filteredProducts = filteredProducts.filter(product => 
-      product.price && product.price >= min && product.price <= max
-    );
-  }
+    const min = filters.minPrice ? Number(filters.minPrice) : 0;
+    const max = filters.maxPrice ? Number(filters.maxPrice) : Infinity;
 
-  // Availability filters
-  if (filters.availability && filters.availability.length > 0) {
-    filteredProducts = filteredProducts.filter(product => {
-      return filters.availability!.some(filter => {
-        switch (filter) {
-          case 'inStock':
-            return product.stock && product.stock > 0;
-          case 'onSale':
-            return product.discount && product.discount > 0;
-          case 'newArrivals':
-            // Products created in last 30 days
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            return product._createdAt && new Date(product._createdAt) > thirtyDaysAgo;
-          default:
-            return true;
-        }
-      });
-    });
-  }
-
-  // Rating filter
-  if (filters.rating) {
-    const minRating = parseFloat(filters.rating);
-    filteredProducts = filteredProducts.filter(product => 
-      (product as any).rating && (product as any).rating >= minRating
+    filteredProducts = filteredProducts.filter(
+      product => product.price && product.price >= min && product.price <= max
     );
   }
 
   // Search filter
-  if (filters.search && filters.search.trim()) {
-    const searchTerm = filters.search.toLowerCase().trim();
-    filteredProducts = filteredProducts.filter(product =>
-      product.name?.toLowerCase().includes(searchTerm) ||
-      product.description?.toLowerCase().includes(searchTerm)
+  if (filters.search?.trim()) {
+    const term = filters.search.toLowerCase();
+    filteredProducts = filteredProducts.filter(
+      product =>
+        product.name?.toLowerCase().includes(term) ||
+        product.description?.toLowerCase()?.includes(term)
     );
+  }
+
+  // Availability filter
+  if (filters.availability && filters.availability.length > 0) {
+    filteredProducts = filteredProducts.filter(product => {
+      return filters.availability?.some(avail => {
+        if (avail === 'inStock') return product.stock && product.stock > 0;
+        if (avail === 'outOfStock') return !product.stock || product.stock === 0;
+        if (avail === 'onSale') return product.discount && product.discount > 0;
+        if (avail === 'newArrivals') return product.label === 'New';
+        return false;
+      });
+    });
   }
 
   // Sort products
@@ -80,17 +68,17 @@ export function filterProducts(products: Product[], filters: FilterParams): Prod
           return (a.name || '').localeCompare(b.name || '');
         case 'name-desc':
           return (b.name || '').localeCompare(a.name || '');
-        case 'rating':
-          return ((b as any).rating || 0) - ((a as any).rating || 0);
         case 'newest':
-        default:
           return new Date(b._createdAt || '').getTime() - new Date(a._createdAt || '').getTime();
+        default:
+          return 0;
       }
     });
   }
 
   return filteredProducts;
 }
+
 
 export function getFilteredProductCount(products: Product[], filters: FilterParams): number {
   return filterProducts(products, filters).length;

@@ -16,6 +16,7 @@ export const getAllProducts = async () => {
     label,
     stock,
     status,
+    description,
     categories[]-> {
       _id,
       title,
