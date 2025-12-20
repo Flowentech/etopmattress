@@ -19,6 +19,54 @@ const CartPage = () => {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponMessage, setCouponMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponMessage({ type: "error", text: "Please enter a coupon code" });
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponMessage(null);
+
+    try {
+      const response = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          couponCode: couponCode.trim(),
+          cartTotal: getTotalPrice(),
+          userId: user?.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.valid) {
+        applyCoupon({
+          id: data.coupon.id,
+          code: data.coupon.code,
+          title: data.coupon.title,
+          discountType: data.coupon.discountType,
+          discountAmount: data.coupon.discountAmount,
+          calculatedDiscount: data.discount,
+        });
+        setCouponMessage({ type: "success", text: data.message });
+        setCouponCode("");
+      } else {
+        setCouponMessage({ type: "error", text: data.message });
+      }
+    } catch (error) {
+      setCouponMessage({ type: "error", text: "Failed to apply coupon" });
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    removeCoupon();
+    setCouponMessage(null);
+  };
+
   // Helper to get item identifier (supports variants)
   const getItemId = (product: any) => {
     const variant = product.selectedVariant;
@@ -162,11 +210,68 @@ const CartPage = () => {
           <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 sticky top-4">
             <h2 className="text-lg sm:text-xl font-bold mb-4">Order Summary</h2>
 
+            {/* Coupon Input */}
+            <div className="mb-4">
+              {!appliedCoupon ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter coupon code"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                      className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      disabled={couponLoading}
+                    />
+                    <button
+                      onClick={handleApplyCoupon}
+                      disabled={couponLoading}
+                      className="px-4 py-2 bg-emerald-600 text-white text-sm rounded-md hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {couponLoading ? "..." : "Apply"}
+                    </button>
+                  </div>
+                  {couponMessage && (
+                    <p className={`text-xs ${couponMessage.type === "success" ? "text-green-600" : "text-red-600"}`}>
+                      {couponMessage.text}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="text-sm font-semibold text-green-900">{appliedCoupon.code}</p>
+                        <p className="text-xs text-green-700">-BDT {appliedCoupon.calculatedDiscount.toFixed(2)} discount</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleRemoveCoupon}
+                      className="text-red-600 hover:text-red-800 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm sm:text-base">
                 <span className="text-gray-600">Subtotal</span>
                 <span className="font-semibold">BDT {getTotalPrice().toFixed(2)}</span>
               </div>
+
+              {appliedCoupon && (
+                <div className="flex justify-between text-sm sm:text-base text-green-600">
+                  <span>Coupon Discount</span>
+                  <span className="font-semibold">-BDT {appliedCoupon.calculatedDiscount.toFixed(2)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between text-sm sm:text-base">
                 <span className="text-gray-600">Shipping</span>
                 <span className="text-xs sm:text-sm text-gray-500">Calculated at checkout</span>
@@ -178,8 +283,11 @@ const CartPage = () => {
               <div className="border-t pt-3">
                 <div className="flex justify-between font-bold text-base sm:text-lg">
                   <span>Total</span>
-                  <span className="text-emerald-600">BDT {getTotalPrice().toFixed(2)}</span>
+                  <span className="text-emerald-600">BDT {getFinalPrice().toFixed(2)}</span>
                 </div>
+                {appliedCoupon && (
+                  <p className="text-xs text-green-600 mt-1">You saved BDT {appliedCoupon.calculatedDiscount.toFixed(2)}!</p>
+                )}
               </div>
             </div>
 

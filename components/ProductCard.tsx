@@ -10,7 +10,7 @@ import WishlistButton from "./WishlistButton";
 
 const ProductCard = memo(({ product }: { product: Product }) => {
   return (
-    <div className="border border-gray-300 rounded-lg overflow-hidden group text-xs w-[300px] h-[200px] flex">
+    <div className="border border-gray-300 rounded-lg overflow-hidden group text-xs w-full max-w-[300px] min-h-[180px] sm:min-h-[200px] flex">
       <div className="w-1/2 border-r border-gray-300 overflow-hidden relative">
         {product?.image && (
           <Link href={`/product/${product?.slug?.current}`}>
@@ -38,10 +38,10 @@ const ProductCard = memo(({ product }: { product: Product }) => {
           <WishlistButton product={product} size="sm" />
         </div>
       </div>
-      <div className="w-1/2 p-3 flex flex-col justify-between">
+      <div className="w-1/2 p-2 sm:p-3 flex flex-col justify-between">
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
-            <p className="text-gray-500 font-medium text-[10px]">Snacks</p>
+            <p className="text-gray-500 font-medium text-[9px] sm:text-[10px]">Snacks</p>
             <div className="text-lightText flex items-center gap-0.5">
               {Array.from({ length: 3 }).map((_, index) => {
                 const isLastStar = index === 2;
@@ -55,7 +55,7 @@ const ProductCard = memo(({ product }: { product: Product }) => {
               })}
             </div>
           </div>
-          <p className="text-xs text-gray-600 tracking-wide font-semibold line-clamp-2 capitalize">
+          <p className="text-[10px] sm:text-xs text-gray-600 tracking-wide font-semibold line-clamp-2 capitalize">
             {product?.name}
           </p>
           <PriceView
@@ -64,7 +64,7 @@ const ProductCard = memo(({ product }: { product: Product }) => {
             label={product?.label}
           />
         </div>
-        <div className="mt-2">
+        <div className="mt-1 sm:mt-2">
           <AddToCartButton product={product} />
         </div>
       </div>

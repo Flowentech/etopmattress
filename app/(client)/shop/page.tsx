@@ -133,7 +133,7 @@ export default function ShopPage() {
     const hasChildren = category.children && category.children.length > 0;
     const isExpanded = expandedCategories.has(category._id);
     const isSelected = selectedCategory === category._id;
-    const paddingLeft = depth * 16;
+    const paddingLeft = depth * 12;
 
     return (
       <div key={category._id}>
@@ -144,14 +144,14 @@ export default function ShopPage() {
             }
             handleCategoryChange(category._id);
           }}
-          className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors ${
+          className={`w-full flex items-center justify-between px-3 py-2 text-left text-sm transition-colors ${
             isSelected
               ? "bg-primary text-white"
               : "text-gray-700 hover:bg-gray-100"
           }`}
-          style={{ paddingLeft: `${paddingLeft + 16}px` }}
+          style={{ paddingLeft: `${paddingLeft + 12}px` }}
         >
-          <span className="flex items-center gap-2 flex-1">
+          <span className="flex items-center gap-1.5 flex-1">
             {hasChildren && (
               <span
                 onClick={(e) => {
@@ -161,17 +161,17 @@ export default function ShopPage() {
                 className="cursor-pointer"
               >
                 {isExpanded ? (
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-3.5 h-3.5" />
                 ) : (
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-3.5 h-3.5" />
                 )}
               </span>
             )}
-            {!hasChildren && <span className="w-4" />}
-            <span className="font-medium">{category.title}</span>
+            {!hasChildren && <span className="w-3.5" />}
+            <span className="font-medium truncate">{category.title}</span>
           </span>
           {category.productCount !== undefined && (
-            <span className={`text-xs ${isSelected ? "text-white" : "text-gray-500"}`}>
+            <span className={`text-xs ml-2 ${isSelected ? "text-white" : "text-gray-500"}`}>
               ({category.productCount})
             </span>
           )}
@@ -195,20 +195,20 @@ export default function ShopPage() {
           <p className="text-gray-600">Browse our collection of products</p>
         </div>
 
-        <div className="flex gap-8">
+        <div className="flex gap-4">
           {/* Desktop Sidebar Filter */}
-          <aside className="hidden lg:block w-80 flex-shrink-0">
+          <aside className="hidden lg:block w-56 flex-shrink-0">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden sticky top-4">
-              <div className="p-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <Filter className="w-5 h-5" />
+              <div className="p-3 border-b border-gray-200">
+                <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                  <Filter className="w-4 h-4" />
                   Categories
                 </h2>
               </div>
               <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
                 <button
                   onClick={() => handleCategoryChange("all")}
-                  className={`w-full text-left px-4 py-2.5 font-medium transition-colors ${
+                  className={`w-full text-left px-3 py-2 text-sm font-medium transition-colors ${
                     selectedCategory === "all"
                       ? "bg-primary text-white"
                       : "text-gray-700 hover:bg-gray-100"
@@ -222,7 +222,7 @@ export default function ShopPage() {
           </aside>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="flex-1 overflow-hidden">
             {/* Mobile Filter Button */}
             <div className="lg:hidden mb-4">
               <button
@@ -273,40 +273,42 @@ export default function ShopPage() {
               )}
             </div>
 
-            {/* Products Grid */}
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-lg shadow-sm p-4 animate-pulse">
-                    <div className="w-full h-48 bg-gray-200 rounded mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                ))}
-              </div>
-            ) : products.length > 0 ? (
-              <ProductGrid products={products} />
-            ) : (
-              <div className="text-center py-16 bg-white rounded-lg shadow-sm">
-                <div className="text-gray-400 mb-4">
-                  <svg
-                    className="w-16 h-16 mx-auto"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                    />
-                  </svg>
+            {/* Products Grid - Scrollable */}
+            <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="bg-white rounded-lg shadow-sm p-4 animate-pulse">
+                      <div className="w-full h-48 bg-gray-200 rounded mb-4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                  ))}
                 </div>
-                <h3 className="text-lg font-medium text-gray-600 mb-2">No Products Found</h3>
-                <p className="text-gray-500">Try selecting a different category</p>
-              </div>
-            )}
+              ) : products.length > 0 ? (
+                <ProductGrid products={products} />
+              ) : (
+                <div className="text-center py-16 bg-white rounded-lg shadow-sm">
+                  <div className="text-gray-400 mb-4">
+                    <svg
+                      className="w-16 h-16 mx-auto"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-600 mb-2">No Products Found</h3>
+                  <p className="text-gray-500">Try selecting a different category</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </Container>

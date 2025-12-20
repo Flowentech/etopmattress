@@ -19,7 +19,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoaded } = useUser();
-  const { items, getTotalPrice, resetCart } = useCartStore();
+  const { items, getTotalPrice, resetCart, appliedCoupon, getFinalPrice } = useCartStore();
 
   const isGuest = searchParams.get("guest") === "true";
 
@@ -117,7 +117,13 @@ export default function CheckoutPage() {
           discount: item.product.discount,
           selectedVariant: (item.product as any).selectedVariant || null,
         })),
-        totalAmount: getTotalPrice(),
+        totalAmount: getFinalPrice(),
+        originalPrice: getTotalPrice(),
+        coupon: appliedCoupon ? {
+          id: appliedCoupon.id,
+          code: appliedCoupon.code,
+          discount: appliedCoupon.calculatedDiscount,
+        } : null,
         paymentMethod: "cod",
         orderType: isGuest ? "guest" : "user",
         userId: user?.id || null,
@@ -349,7 +355,7 @@ export default function CheckoutPage() {
 
                   <Button
                     type="submit"
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 text-lg"
+                    className="w-full py-6 text-lg"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? "Placing Order..." : "Place Order"}
@@ -422,20 +428,29 @@ export default function CheckoutPage() {
                   <div className="space-y-2 pt-4 border-t">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
-                      <span className="font-medium">${getTotalPrice().toFixed(2)}</span>
+                      <span className="font-medium">BDT {getTotalPrice().toFixed(2)}</span>
                     </div>
+                    {appliedCoupon && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Coupon ({appliedCoupon.code})</span>
+                        <span className="font-medium">-BDT {appliedCoupon.calculatedDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Shipping</span>
                       <span className="font-medium text-green-600">FREE</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Tax</span>
-                      <span className="font-medium">$0.00</span>
+                      <span className="font-medium">BDT 0.00</span>
                     </div>
                     <div className="flex justify-between pt-3 border-t font-bold text-lg">
                       <span>Total</span>
-                      <span className="text-emerald-600">${getTotalPrice().toFixed(2)}</span>
+                      <span className="text-emerald-600">BDT {getFinalPrice().toFixed(2)}</span>
                     </div>
+                    {appliedCoupon && (
+                      <p className="text-xs text-green-600 text-right">You saved BDT {appliedCoupon.calculatedDiscount.toFixed(2)}!</p>
+                    )}
                   </div>
                 </div>
               </CardContent>

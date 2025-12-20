@@ -17,6 +17,12 @@ interface GuestOrderData {
   }>;
   paymentMethod: 'cod';
   totalAmount: number;
+  originalPrice?: number;
+  coupon?: {
+    id: string;
+    code: string;
+    discount: number;
+  } | null;
   deliveryAddress: {
     fullName: string;
     phone: string;
@@ -86,9 +92,15 @@ export async function POST(request: NextRequest) {
       clerkUserId: orderData.clerkUserId,
       email: orderData.customerEmail,
       currency: "BDT",
-      amountDiscount: 0,
+      amountDiscount: orderData.coupon?.discount || 0,
       products: sanityProducts,
       totalPrice: orderData.totalAmount,
+      originalPrice: orderData.originalPrice,
+      couponCode: orderData.coupon?.code || null,
+      coupon: orderData.coupon ? {
+        _type: "reference",
+        _ref: orderData.coupon.id,
+      } : undefined,
       status: "pending",
       orderDate: orderDate.toISOString(),
       estimatedDelivery: estimatedDelivery.toISOString(),
@@ -98,6 +110,19 @@ export async function POST(request: NextRequest) {
       stripeCheckoutSessionId: null,
       stripePaymentIntentId: null,
     });
+
+    // Increment coupon usage count if a coupon was applied
+    if (orderData.coupon?.id) {
+      try {
+        await backendClient
+          .patch(orderData.coupon.id)
+          .inc({ currentUsageCount: 1 })
+          .commit();
+      } catch (error) {
+        console.error("Error incrementing coupon usage:", error);
+        // Don't fail the order if coupon increment fails
+      }
+    }
 
     // Handle newsletter subscription
     if (orderData.subscribeToNewsletter && orderData.customerEmail) {

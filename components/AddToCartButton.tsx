@@ -49,26 +49,37 @@ const AddToCartButton = ({ product, className = "" }: AddToCartButtonProps) => {
         ${className}
         ${
           currentStock === 0
-            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
             : isAdded
-            ? "bg-primary text-white"
+            ? "bg-green-600 text-white"
             : "bg-primary text-white hover:bg-primary/90"
         }
-        px-4 py-2 rounded-md transition-all duration-300 flex items-center justify-center gap-2 text-[10px] font-medium
+        w-full px-2 sm:px-3 py-1.5 sm:py-2 rounded-md transition-all duration-300 flex items-center justify-center gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] font-medium
       `}
     >
       {currentStock === 0 ? (
-        "Out of Stock"
+        <span className="text-[9px] sm:text-[10px]">Out of Stock</span>
       ) : isAdded ? (
         <>
           <span>✓</span>
-          <span>Added to Cart</span>
+          <span className="hidden sm:inline">Added to Cart</span>
+          <span className="sm:hidden">Added</span>
         </>
       ) : (
         <>
-          <FaCartPlus size={14} />
-          <span>
-            {itemQuantity > 0 ? `In Cart (${itemQuantity})` : "Add to Cart"}
+          <FaCartPlus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+          <span className="truncate">
+            {itemQuantity > 0 ? (
+              <>
+                <span className="hidden sm:inline">In Cart ({itemQuantity})</span>
+                <span className="sm:hidden">({itemQuantity})</span>
+              </>
+            ) : (
+              <>
+                <span className="hidden sm:inline">Add to Cart</span>
+                <span className="sm:hidden">Add</span>
+              </>
+            )}
           </span>
         </>
       )}

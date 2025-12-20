@@ -30,19 +30,19 @@ interface OrderData {
   notes?: string;
   items: OrderItem[];
   totalAmount: number;
+  originalPrice?: number;
+  coupon?: {
+    id: string;
+    code: string;
+    discount: number;
+  } | null;
   paymentMethod: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    // Allow orders without sign-in (guest checkout)
 
     const orderData: OrderData = await request.json();
 
@@ -102,12 +102,18 @@ export async function POST(request: NextRequest) {
       _type: "order",
       orderNumber: orderNumber,
       customerName: `${orderData.firstName} ${orderData.lastName}`,
-      clerkUserId: userId,
+      clerkUserId: userId || null,
       email: orderData.email,
       currency: "BDT",
-      amountDiscount: 0,
+      amountDiscount: orderData.coupon?.discount || 0,
       products: sanityProducts,
       totalPrice: orderData.totalAmount,
+      originalPrice: orderData.originalPrice,
+      couponCode: orderData.coupon?.code || null,
+      coupon: orderData.coupon ? {
+        _type: "reference",
+        _ref: orderData.coupon.id,
+      } : undefined,
       status: "pending",
       orderDate: orderDate.toISOString(),
       estimatedDelivery: estimatedDelivery.toISOString(),
@@ -118,6 +124,19 @@ export async function POST(request: NextRequest) {
       stripeCheckoutSessionId: null,
       stripePaymentIntentId: null,
     });
+
+    // Increment coupon usage count if a coupon was applied
+    if (orderData.coupon?.id) {
+      try {
+        await backendClient
+          .patch(orderData.coupon.id)
+          .inc({ currentUsageCount: 1 })
+          .commit();
+      } catch (error) {
+        console.error("Error incrementing coupon usage:", error);
+        // Don't fail the order if coupon increment fails
+      }
+    }
 
     // Send confirmation (implement your email service)
     await sendOrderConfirmation(orderData, orderNumber, userId);
@@ -142,7 +161,7 @@ export async function POST(request: NextRequest) {
 async function sendOrderConfirmation(
   orderData: OrderData,
   orderNumber: string,
-  userId: string
+  userId: string | null
 ) {
   try {
     console.log(
