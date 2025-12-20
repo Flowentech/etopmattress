@@ -58,69 +58,88 @@ const CartPage = () => {
                 const variant = (item.product as any).selectedVariant;
 
                 return (
-                  <div key={itemId} className="flex items-center gap-4 p-4 border rounded-lg">
-                    {item.product.image && (
-                      <div className="relative w-20 h-20 flex-shrink-0">
-                        <Image
-                          src={urlFor(item.product.image).url()}
-                          alt={item.product.name || "Product"}
-                          fill
-                          className="object-cover rounded-md"
-                        />
-                      </div>
-                    )}
+                  <div key={itemId} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg">
+                    {/* Image and Product Info */}
+                    <div className="flex gap-3 flex-1">
+                      {item.product.image && (
+                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
+                          <Image
+                            src={urlFor(item.product.image).url()}
+                            alt={item.product.name || "Product"}
+                            fill
+                            className="object-cover rounded-md"
+                          />
+                        </div>
+                      )}
 
-                    <div className="flex-1">
-                      <Link
-                        href={`/product/${item.product.slug?.current}`}
-                        className="font-semibold text-gray-900 hover:text-primary transition-colors"
-                      >
-                        {item.product.name}
-                      </Link>
-                      {variant && (
-                        <div className="text-xs text-gray-500 mt-1 space-y-0.5">
-                          <p>Size: {variant.sizeName}</p>
-                          <p>Height: {variant.heightName}</p>
-                        </div>
-                      )}
-                      {!variant && (
-                        <p className="text-sm text-gray-600 mt-1">
-                          {item.product.categories?.join(", ") || "Product"}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="flex items-center border rounded-md">
-                          <button
-                            onClick={() => removeItem(itemId)}
-                            className="px-3 py-1 hover:bg-gray-100 transition-colors"
-                          >
-                            -
-                          </button>
-                          <span className="px-3 py-1 border-x">{item.quantity}</span>
-                          <button
-                            onClick={() => addItem(item.product)}
-                            className="px-3 py-1 hover:bg-gray-100 transition-colors"
-                          >
-                            +
-                          </button>
-                        </div>
-                        <button
-                          onClick={() => deleteCartProduct(itemId)}
-                          className="text-red-500 hover:text-red-700 transition-colors"
+                      <div className="flex-1 min-w-0">
+                        <Link
+                          href={`/product/${item.product.slug?.current}`}
+                          className="font-semibold text-sm sm:text-base text-gray-900 hover:text-primary transition-colors line-clamp-2"
                         >
-                          <FaRegTrashAlt size={16} />
-                        </button>
+                          {item.product.name}
+                        </Link>
+                        {variant && (
+                          <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+                            <p>Size: {variant.sizeName}</p>
+                            <p>Height: {variant.heightName}</p>
+                          </div>
+                        )}
+                        {!variant && (
+                          <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                            {item.product.categories?.join(", ") || "Product"}
+                          </p>
+                        )}
+
+                        {/* Mobile Price - Show below product name on mobile */}
+                        <div className="sm:hidden mt-2">
+                          <div className="flex items-center justify-between">
+                            <PriceView
+                              price={itemPrice}
+                              discount={item.product.discount}
+                              label={item.product.label}
+                            />
+                            <p className="text-xs font-semibold text-gray-900">
+                              BDT {(itemPrice * item.quantity).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 mt-3">
+                          <div className="flex items-center border rounded-md">
+                            <button
+                              onClick={() => removeItem(itemId)}
+                              className="px-2.5 sm:px-3 py-1 hover:bg-gray-100 transition-colors text-sm"
+                            >
+                              -
+                            </button>
+                            <span className="px-2.5 sm:px-3 py-1 border-x text-sm">{item.quantity}</span>
+                            <button
+                              onClick={() => addItem(item.product)}
+                              className="px-2.5 sm:px-3 py-1 hover:bg-gray-100 transition-colors text-sm"
+                            >
+                              +
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => deleteCartProduct(itemId)}
+                            className="text-red-500 hover:text-red-700 transition-colors p-2"
+                          >
+                            <FaRegTrashAlt size={14} />
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    {/* Desktop Price - Show on right side on desktop */}
+                    <div className="hidden sm:block text-right flex-shrink-0 min-w-[140px]">
                       <PriceView
                         price={itemPrice}
                         discount={item.product.discount}
                         label={item.product.label}
                       />
-                      <p className="text-sm text-gray-600 mt-1">
-                        Subtotal: ${(itemPrice * item.quantity).toFixed(2)}
+                      <p className="text-sm text-gray-600 mt-1 font-semibold">
+                        Subtotal: BDT {(itemPrice * item.quantity).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -132,40 +151,40 @@ const CartPage = () => {
 
         {/* Order Summary */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 sticky top-4">
+            <h2 className="text-lg sm:text-xl font-bold mb-4">Order Summary</h2>
 
             <div className="space-y-3 mb-6">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>${getTotalPrice().toFixed(2)}</span>
+              <div className="flex justify-between text-sm sm:text-base">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="font-semibold">BDT {getTotalPrice().toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>Calculated at checkout</span>
+              <div className="flex justify-between text-sm sm:text-base">
+                <span className="text-gray-600">Shipping</span>
+                <span className="text-xs sm:text-sm text-gray-500">Calculated at checkout</span>
               </div>
-              <div className="flex justify-between">
-                <span>Tax</span>
-                <span>Calculated at checkout</span>
+              <div className="flex justify-between text-sm sm:text-base">
+                <span className="text-gray-600">Tax</span>
+                <span className="text-xs sm:text-sm text-gray-500">Calculated at checkout</span>
               </div>
               <div className="border-t pt-3">
-                <div className="flex justify-between font-bold text-lg">
+                <div className="flex justify-between font-bold text-base sm:text-lg">
                   <span>Total</span>
-                  <span>${getTotalPrice().toFixed(2)}</span>
+                  <span className="text-emerald-600">BDT {getTotalPrice().toFixed(2)}</span>
                 </div>
               </div>
             </div>
 
             <Link
               href="/checkout"
-              className="w-full bg-emerald-600 text-white py-3 rounded-md hover:bg-emerald-700 transition-colors text-center block"
+              className="w-full bg-emerald-600 text-white py-3 sm:py-3.5 rounded-md hover:bg-emerald-700 transition-colors text-center block text-sm sm:text-base font-medium"
             >
               Proceed to Checkout
             </Link>
 
             <Link
               href="/"
-              className="w-full text-emerald-600 py-2 hover:text-emerald-700 transition-colors text-center block mt-3"
+              className="w-full text-emerald-600 py-2 hover:text-emerald-700 transition-colors text-center block mt-3 text-sm sm:text-base"
             >
               Continue Shopping
             </Link>
