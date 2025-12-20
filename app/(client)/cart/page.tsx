@@ -7,9 +7,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { FaRegTrashAlt } from "react-icons/fa";
 import { urlFor } from "@/sanity/lib/image";
+import { useState } from "react";
+import { useUser } from "@clerk/nextjs";
+import { Tag, X } from "lucide-react";
 
 const CartPage = () => {
-  const { items, removeItem, addItem, deleteCartProduct, getTotalPrice } = useCartStore();
+  const { items, removeItem, addItem, deleteCartProduct, getTotalPrice, appliedCoupon, applyCoupon, removeCoupon, getFinalPrice } = useCartStore();
+  const { user } = useUser();
+
+  const [couponCode, setCouponCode] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponMessage, setCouponMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Helper to get item identifier (supports variants)
   const getItemId = (product: any) => {

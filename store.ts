@@ -7,8 +7,18 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface AppliedCoupon {
+  id: string;
+  code: string;
+  title: string;
+  discountType: "percentage" | "fixed";
+  discountAmount: number;
+  calculatedDiscount: number;
+}
+
 interface CartState {
   items: CartItem[];
+  appliedCoupon: AppliedCoupon | null;
   addItem: (product: Product) => void;
   removeItem: (productId: string) => void;
   deleteCartProduct: (productId: string) => void;
@@ -17,6 +27,9 @@ interface CartState {
   getSubTotalPrice: () => number;
   getItemCount: (productId: string) => number;
   getGroupedItems: () => CartItem[];
+  applyCoupon: (coupon: AppliedCoupon) => void;
+  removeCoupon: () => void;
+  getFinalPrice: () => number;
 }
 
 // Helper function to get unique item identifier (supports variants)
@@ -41,6 +54,7 @@ const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [] as CartItem[],
+      appliedCoupon: null as AppliedCoupon | null,
       addItem: (product) =>
         set((state) => {
           const itemId = getItemIdentifier(product);
@@ -79,7 +93,7 @@ const useCartStore = create<CartState>()(
             ({ product }) => getItemIdentifier(product) !== productId
           ),
         })),
-      resetCart: () => set({ items: [] }),
+      resetCart: () => set({ items: [], appliedCoupon: null }),
       getTotalPrice: () => {
         return get().items.reduce(
           (total, item) => total + getProductPrice(item.product) * item.quantity,
@@ -99,14 +113,28 @@ const useCartStore = create<CartState>()(
         return item ? item.quantity : 0;
       },
       getGroupedItems: () => get().items,
+      applyCoupon: (coupon) => set({ appliedCoupon: coupon }),
+      removeCoupon: () => set({ appliedCoupon: null }),
+      getFinalPrice: () => {
+        const total = get().getTotalPrice();
+        const coupon = get().appliedCoupon;
+        if (coupon) {
+          return Math.max(0, total - coupon.calculatedDiscount);
+        }
+        return total;
+      },
     }),
     {
       name: "cart-store",
-      version: 2,
+      version: 3,
       migrate: (persistedState: any, version: number) => {
         if (version < 2) {
           // Migration to version 2 - reset cart to handle new variant structure
-          return { ...persistedState, items: [] };
+          return { ...persistedState, items: [], appliedCoupon: null };
+        }
+        if (version < 3) {
+          // Migration to version 3 - add coupon support
+          return { ...persistedState, appliedCoupon: null };
         }
         return persistedState;
       },

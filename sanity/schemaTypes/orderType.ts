@@ -126,6 +126,25 @@ export const orderType = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: "couponCode",
+      title: "Coupon Code Applied",
+      type: "string",
+      description: "The coupon code used for this order",
+    }),
+    defineField({
+      name: "coupon",
+      title: "Coupon Reference",
+      type: "reference",
+      to: [{ type: "sale" }],
+      description: "Reference to the coupon/sale used",
+    }),
+    defineField({
+      name: "originalPrice",
+      title: "Original Price",
+      type: "number",
+      description: "Price before discount was applied",
+    }),
+    defineField({
       name: "status",
       title: "Order Status",
       type: "string",
