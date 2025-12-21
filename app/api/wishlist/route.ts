@@ -15,16 +15,27 @@ export async function GET() {
     }
 
     const WISHLIST_QUERY = defineQuery(`
-      *[_type == "wishlist" && userId == $userId] | order(_createdAt desc) {
+      *[_type == "wishlist" && userId == $userId][0] {
         _id,
-        productId,
         userId,
-        _createdAt,
-        "product": *[_type == "product" && _id == ^.productId][0]
+        products[] {
+          _key,
+          addedAt,
+          "product": product->
+        },
+        createdAt,
+        updatedAt
       }
     `);
 
-    const wishlist = await sanityFetch(WISHLIST_QUERY, { userId }) || [];
+    const result = await sanityFetch(WISHLIST_QUERY, { userId });
+    const wishlist = result?.products?.map((item: any) => ({
+      _id: item._key,
+      productId: item.product?._id,
+      userId,
+      createdAt: item.addedAt,
+      product: item.product
+    })).filter((item: any) => item.product) || [];
 
     return NextResponse.json({
       success: true,

@@ -1,7 +1,7 @@
 'use client';
 
 import { UserButton } from '@clerk/nextjs';
-import { User, LayoutDashboard, ShoppingBag, Building2 } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag } from 'lucide-react';
 
 const UserMenu = () => {
   return (
@@ -27,11 +27,6 @@ const UserMenu = () => {
             label="My Orders"
             labelIcon={<ShoppingBag size={16} />}
             href="/dashboard/user?tab=orders"
-          />
-          <UserButton.Link
-            label="Find Architect"
-            labelIcon={<Building2 size={16} />}
-            href="/find-architects"
           />
           <UserButton.Action label="manageAccount" />
           <UserButton.Action label="signOut" />

@@ -36,7 +36,8 @@ import {
   RefreshCw,
   Trash2,
   Truck,
-  MapPin
+  MapPin,
+  Edit
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -91,6 +92,9 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [shipmentDialogOpen, setShipmentDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [shipmentData, setShipmentData] = useState({
     trackingNumber: '',
     estimatedDelivery: '',
@@ -305,6 +309,45 @@ export default function OrdersPage() {
     }
   };
 
+  const handleEditStatus = (order: Order) => {
+    setSelectedOrder(order);
+    setNewStatus(order.status);
+    setStatusDialogOpen(true);
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!selectedOrder || !newStatus) return;
+
+    setIsUpdatingStatus(true);
+
+    try {
+      const response = await fetch(`/api/admin/orders/${selectedOrder._id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: newStatus,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Order status updated successfully!');
+        setStatusDialogOpen(false);
+        loadOrders(); // Refresh orders
+      } else {
+        toast.error(result.error || 'Failed to update status');
+      }
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast.error(error?.message || 'Failed to update status');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   if (loading && orders.length === 0) {
     return (
       <div className="space-y-6">
@@ -456,8 +499,7 @@ export default function OrdersPage() {
                 <TableRow>
                   <TableHead>Order #</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Store</TableHead>
-                  <TableHead>Items</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
@@ -474,49 +516,29 @@ export default function OrdersPage() {
                       <div>
                         <p className="font-medium">{order.customerName}</p>
                         <p className="text-sm text-gray-500">{order.email}</p>
-                        {order.customerPhone && (
-                          <p className="text-sm text-gray-500">{order.customerPhone}</p>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <p className="font-medium">{order.storeName}</p>
-                        <p className="text-sm text-gray-500">{order.storeSlug}</p>
+                      <p className="text-sm">{order.customerPhone || 'N/A'}</p>
+                    </TableCell>
+                    <TableCell>
+                      <p className="font-medium">{formatPrice(order.totalPrice, order.currency)}</p>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(order.status)}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditStatus(order)}
+                          className="h-7 w-7 p-0"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1">
-                        {order.items.slice(0, 2).map((item, index) => (
-                          <p key={index} className="text-sm">
-                            {item.quantity}x {item.name}
-                          </p>
-                        ))}
-                        {order.items.length > 2 && (
-                          <p className="text-sm text-gray-500">
-                            +{order.items.length - 2} more
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{formatPrice(order.totalPrice, order.currency)}</p>
-                        <p className="text-sm text-gray-500">
-                          Store: {formatPrice(order.storeEarnings, order.currency)}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(order.status)}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="text-sm">{formatDate(order.orderDate)}</p>
-                        <p className="text-xs text-gray-500">
-                          {order.payoutStatus}
-                        </p>
-                      </div>
+                      <p className="text-sm">{formatDate(order.orderDate)}</p>
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
@@ -555,7 +577,7 @@ export default function OrdersPage() {
                 ))}
                 {orders.length === 0 && !loading && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                       No orders found
                     </TableCell>
                   </TableRow>
@@ -740,6 +762,77 @@ export default function OrdersPage() {
                     <>
                       <Truck className="h-4 w-4 mr-2" />
                       Ship Order
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Status Update Dialog */}
+      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5" />
+              Update Order Status
+            </DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-4 py-4">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="font-medium text-sm">Order #{selectedOrder.orderNumber}</p>
+                <p className="text-sm text-gray-600">{selectedOrder.customerName}</p>
+                <p className="text-sm text-gray-600">{selectedOrder.email}</p>
+                {selectedOrder.customerPhone && (
+                  <p className="text-sm text-gray-600">Phone: {selectedOrder.customerPhone}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">Current Status</label>
+                <div className="py-2">
+                  {getStatusBadge(selectedOrder.status)}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-1 block">New Status</label>
+                <Select value={newStatus} onValueChange={setNewStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select new status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="processing">Processing</SelectItem>
+                    <SelectItem value="shipped">Shipped</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button variant="outline" onClick={() => setStatusDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleUpdateStatus}
+                  disabled={isUpdatingStatus || !newStatus || newStatus === selectedOrder.status}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  {isUpdatingStatus ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Update Status
                     </>
                   )}
                 </Button>

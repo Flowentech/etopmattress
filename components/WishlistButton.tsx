@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "./ui/button";
 import { useUser } from "@clerk/nextjs";
@@ -23,6 +23,36 @@ const WishlistButton: React.FC<WishlistButtonProps> = ({
   const { toggleItem, isWishlisted: isGuestWishlisted } = useWishlistStore();
   const [isServerWishlisted, setIsServerWishlisted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  // Check initial wishlist state for logged-in users
+  useEffect(() => {
+    const checkWishlistStatus = async () => {
+      if (user) {
+        try {
+          const response = await fetch("/api/wishlist/check", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ productId: product._id }),
+          });
+          const data = await response.json();
+          if (data.success) {
+            setIsServerWishlisted(data.isWishlisted);
+          }
+        } catch (error) {
+          console.error("Error checking wishlist status:", error);
+        } finally {
+          setIsChecking(false);
+        }
+      } else {
+        setIsChecking(false);
+      }
+    };
+
+    checkWishlistStatus();
+  }, [user, product._id]);
 
   const isWishlisted = user ? isServerWishlisted : isGuestWishlisted(product._id);
 
