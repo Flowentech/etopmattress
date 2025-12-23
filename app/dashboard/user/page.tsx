@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { redirect } from 'next/navigation';
 import Container from '@/components/Container';
@@ -47,7 +47,7 @@ interface Order {
   };
 }
 
-export default function UserDashboardPage() {
+function UserDashboardContent() {
   const { user, isLoaded } = useUser();
   const searchParams = useSearchParams();
   const tab = searchParams?.get('tab') || 'overview';
@@ -429,5 +429,20 @@ export default function UserDashboardPage() {
         </Tabs>
       </Container>
     </div>
+  );
+}
+
+export default function UserDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    }>
+      <UserDashboardContent />
+    </Suspense>
   );
 }
