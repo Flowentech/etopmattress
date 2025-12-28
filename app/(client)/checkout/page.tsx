@@ -14,6 +14,7 @@ import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
 import { ArrowLeft, ShoppingBag, Package, CreditCard } from "lucide-react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -150,16 +151,25 @@ export default function CheckoutPage() {
           localStorage.removeItem("guestCheckoutInfo");
         }
 
-        // Redirect to success page
-        router.push(
-          `/order-success?orderNumber=${data.orderNumber || data._id}&type=${isGuest ? "guest" : "user"}`
-        );
+        // Show success toast
+        toast.success("Order placed successfully! Thank you for your purchase.");
+
+        // Redirect based on user type
+        if (isGuest) {
+          // Guest users go to order success page
+          router.push(
+            `/order-success?orderNumber=${data.orderNumber || data._id}&type=guest`
+          );
+        } else {
+          // Authenticated users go to orders page
+          router.push("/orders");
+        }
       } else {
-        alert(data.error || "Failed to place order. Please try again.");
+        toast.error(data.error || "Failed to place order. Please try again.");
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      alert("An error occurred. Please try again.");
+      toast.error("An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
