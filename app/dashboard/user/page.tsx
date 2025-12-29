@@ -32,7 +32,7 @@ interface Order {
   currency: string;
   status: string;
   orderDate: string;
-  items: Array<{
+  items?: Array<{
     name: string;
     quantity: number;
     price: number;
@@ -77,15 +77,24 @@ function UserDashboardContent() {
     try {
       setLoading(true);
       const response = await fetch('/api/orders/user');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setOrders(data.orders || []);
-          calculateStats(data.orders || []);
-        }
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        const ordersList = Array.isArray(data.orders) ? data.orders : [];
+        // Ensure all orders have items array
+        const normalizedOrders = ordersList.map((order: Order) => ({
+          ...order,
+          items: order.items || [],
+        }));
+        setOrders(normalizedOrders);
+        calculateStats(normalizedOrders);
+      } else {
+        console.error('Failed to fetch orders:', data.message);
+        setOrders([]);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -293,7 +302,7 @@ function UserDashboardContent() {
                             <h4 className="font-medium">Order #{order.orderNumber}</h4>
                             {getStatusBadge(order.status)}
                           </div>
-                          <p className="text-sm text-gray-600">{order.items.length} items</p>
+                          <p className="text-sm text-gray-600">{order.items?.length || 0} items</p>
                           <p className="text-xs text-gray-500">{formatDate(order.orderDate)}</p>
                         </div>
                         <div className="text-right">
@@ -357,19 +366,21 @@ function UserDashboardContent() {
                         <CardContent className="p-6">
                           <div className="space-y-4">
                             {/* Order Items */}
-                            <div>
-                              <h4 className="font-medium mb-2">Items</h4>
-                              <div className="space-y-2">
-                                {order.items.map((item, index) => (
-                                  <div key={index} className="flex justify-between text-sm">
-                                    <span className="text-gray-600">
-                                      {item.name} × {item.quantity}
-                                    </span>
-                                    <span className="font-medium">{formatPrice(item.price * item.quantity, order.currency)}</span>
-                                  </div>
-                                ))}
+                            {order.items && order.items.length > 0 && (
+                              <div>
+                                <h4 className="font-medium mb-2">Items</h4>
+                                <div className="space-y-2">
+                                  {order.items.map((item, index) => (
+                                    <div key={index} className="flex justify-between text-sm">
+                                      <span className="text-gray-600">
+                                        {item.name} × {item.quantity}
+                                      </span>
+                                      <span className="font-medium">{formatPrice(item.price * item.quantity, order.currency)}</span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
+                            )}
 
                             {/* Delivery Address */}
                             {order.deliveryAddress && (

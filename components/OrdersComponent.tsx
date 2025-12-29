@@ -20,6 +20,12 @@ const OrdersComponent = ({ orders }: { orders: MY_ORDERS_QUERYResult }) => {
   const handleOrderClick = (order: MY_ORDERS_QUERYResult[number]) => {
     setSelectedOrder(order);
   };
+
+  // Handle null or undefined orders
+  if (!orders || !Array.isArray(orders)) {
+    return null;
+  }
+
   return (
     <>
       <TableBody>

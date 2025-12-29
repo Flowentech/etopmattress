@@ -25,11 +25,11 @@ export async function GET(request: NextRequest) {
         status,
         orderDate,
         deliveryAddress,
-        items[] {
-          name,
+        "items": products[] {
+          "name": product->name,
           quantity,
-          price,
-          image
+          "price": product->price,
+          "image": product->image
         },
         orderUpdates[] {
           status,
@@ -41,14 +41,20 @@ export async function GET(request: NextRequest) {
       { userId }
     );
 
+    // Ensure all orders have items array (even if empty)
+    const normalizedOrders = (orders || []).map((order: any) => ({
+      ...order,
+      items: order.items || [],
+    }));
+
     return NextResponse.json({
       success: true,
-      orders: orders || [],
+      orders: normalizedOrders,
     });
   } catch (error) {
     console.error('Error fetching user orders:', error);
     return NextResponse.json(
-      { success: false, message: 'Internal server error' },
+      { success: false, message: 'Internal server error', orders: [] },
       { status: 500 }
     );
   }
